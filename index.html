@@ -1,0 +1,3027 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>بيتزا وفطائر العميد | EL AMEED Restaurant</title>
+  
+  <!-- خط Cairo الرسمي من Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800;900&display=swap" rel="stylesheet">
+  
+  <!-- مكتبة الأنماط Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            cairo: ['Cairo', 'sans-serif'],
+          },
+          colors: {
+            brand: {
+              50: '#fdf2f2',
+              100: '#fde8e8',
+              200: '#fbd5d5',
+              700: '#9b1c1c',
+              800: '#771d1d',
+              850: '#5c1414',
+              900: '#4a0f0f',
+              950: '#2d0707'
+            },
+            amberAccent: {
+              400: '#fbbf24',
+              500: '#f59e0b',
+              600: '#d97706',
+              700: '#b45309'
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <!-- مكتبة الأيقونات العصرية Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+  <!-- مكتبة SheetJS لقراءة وتصدير ملفات Excel (.xlsx, .xls) و CSV محلياً 100% -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+  <!-- طبقة الأنماط الأساسية المانعة للتشوه وتداخل النوافذ (Anti-FOUC Bulletproof CSS) -->
+  <style>
+    .hidden {
+      display: none !important;
+    }
+    
+    html, body {
+      font-family: 'Cairo', sans-serif;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      background-color: #0f172a;
+      margin: 0;
+      padding: 0;
+      min-height: 100vh;
+    }
+
+    .mobile-app-wrapper {
+      max-width: 480px;
+      margin-left: auto;
+      margin-right: auto;
+      min-height: 100vh;
+      background-color: #f8fafc;
+      position: relative;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.4);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    .tap-active:active {
+      transform: scale(0.97);
+    }
+
+    @keyframes pulseGlow {
+      0%, 100% { transform: scale(1); box-shadow: 0 10px 25px -5px rgba(225, 29, 72, 0.4); }
+      50% { transform: scale(1.02); box-shadow: 0 15px 30px -5px rgba(245, 158, 11, 0.6); }
+    }
+    .pulse-order-btn {
+      animation: pulseGlow 2.4s infinite ease-in-out;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 50;
+      background-color: rgba(15, 23, 42, 0.75);
+      backdrop-filter: blur(4px);
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      transition: opacity 0.25s ease-in-out;
+    }
+
+    .bottom-sheet-content {
+      width: 100%;
+      max-width: 480px;
+      max-height: 90vh;
+      background: #ffffff;
+      border-radius: 1.5rem 1.5rem 0 0;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      animation: slideUpAnim 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    @keyframes slideUpAnim {
+      from { transform: translateY(100%); }
+      to { transform: translateY(0); }
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- الحاوية الأساسية لتطبيق الموبايل (Mobile-First Centered Container) -->
+  <div class="mobile-app-wrapper pb-24">
+
+    <!-- 1. شريط الإشعار العلوي الذكي (ساعات العمل + حالة المصدر) -->
+    <div id="smartStatusBar" class="bg-gradient-to-r from-emerald-700 via-emerald-600 to-teal-700 text-white text-[11px] font-bold px-3 py-1.5 flex items-center justify-between sticky top-0 z-40 shadow-sm transition-colors duration-300">
+      <div class="flex items-center gap-1.5">
+        <span class="relative flex h-2 w-2">
+          <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-200 opacity-75"></span>
+          <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-300"></span>
+        </span>
+        <span id="liveStatusText">المطعم مفتوح الآن • خدمة 24 ساعة يومياً</span>
+      </div>
+      <div class="flex items-center gap-2">
+        <button id="refreshSyncBtn" title="تحديث القائمة" class="flex items-center gap-1 text-[10px] bg-white/15 hover:bg-white/25 px-2 py-0.5 rounded-full transition-all">
+          <i data-lucide="refresh-cw" class="w-3 h-3"></i>
+          <span id="syncStatusBadge">محلي</span>
+        </button>
+        <button id="openAdminLoginBtn" title="لوحة التحكم" class="text-white/80 hover:text-white p-0.5">
+          <i data-lucide="shield-check" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- 2. الهيدر الرسمي وشعار "بيتزا وفطائر العميد" المدمج -->
+    <header class="bg-gradient-to-b from-brand-950 via-brand-900 to-brand-850 text-white p-4 relative overflow-hidden border-b border-brand-800">
+      <div class="absolute -right-10 -top-10 w-36 h-36 bg-amberAccent-500/10 rounded-full blur-2xl pointer-events-none"></div>
+      <div class="absolute -left-10 -bottom-10 w-36 h-36 bg-brand-700/20 rounded-full blur-2xl pointer-events-none"></div>
+
+      <div class="flex items-center justify-between gap-3 relative z-10">
+        <div class="flex items-center gap-3">
+          <!-- الشعار الرسمي المرسوم برمجياً بتقنية SVG فائقة الدقة -->
+          <div class="w-14 h-14 rounded-2xl bg-gradient-to-br from-amberAccent-500 to-brand-700 p-0.5 shadow-xl flex-shrink-0 flex items-center justify-center">
+            <div class="w-full h-full bg-brand-950 rounded-[14px] flex items-center justify-center p-1.5">
+              <svg viewBox="0 0 100 100" class="w-full h-full" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M50 12 C68 12 84 18 92 24 L50 90 L8 24 C16 18 32 12 50 12 Z" fill="#b91c1c" />
+                <path d="M50 16 C66 16 80 21 87 26 L50 84 L13 26 C20 21 34 16 50 16 Z" fill="#f59e0b" />
+                <path d="M8 24 C20 15 80 15 92 24 C84 28 16 28 8 24 Z" fill="#92400e" />
+                <circle cx="50" cy="36" r="6" fill="#7f1d1d" />
+                <circle cx="36" cy="50" r="5" fill="#7f1d1d" />
+                <circle cx="62" cy="52" r="5.5" fill="#7f1d1d" />
+                <circle cx="48" cy="68" r="4.5" fill="#7f1d1d" />
+                <circle cx="40" cy="30" r="2.5" fill="#15803d" />
+                <circle cx="64" cy="38" r="3" fill="#15803d" />
+                <circle cx="52" cy="52" r="2.5" fill="#15803d" />
+                <path d="M50 95 C45 88 47 80 50 78 C53 80 55 88 50 95 Z" fill="#fbbf24" />
+              </svg>
+            </div>
+          </div>
+
+          <div>
+            <div class="flex items-center gap-1.5">
+              <h1 id="brandNameHeader" class="text-xl font-black tracking-tight text-white flex items-center gap-1">
+                بيتزا وفطائر العميد
+              </h1>
+              <span class="bg-amberAccent-500 text-slate-950 text-[10px] font-black px-1.5 py-0.5 rounded-md">الأصلي</span>
+            </div>
+            <p class="text-[11px] text-brand-200 font-semibold tracking-wide">EL AMEED • Pizza, Feteer & Crepe</p>
+            <p class="text-[10px] text-slate-300 mt-0.5 flex items-center gap-1">
+              <i data-lucide="clock" class="w-3 h-3 text-amberAccent-400"></i>
+              <span>مفتوح 24 ساعة لخدمتكم يومياً</span>
+            </p>
+          </div>
+        </div>
+
+        <button id="quickShareBtn" title="مشاركة المنيو" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 border border-white/10 text-white flex items-center justify-center transition-all tap-active flex-shrink-0">
+          <i data-lucide="share-2" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- أزرار الإجراءات السريعة -->
+      <div class="grid grid-cols-3 gap-2 mt-3 pt-2 border-t border-brand-800/80 relative z-10">
+        <a id="headerCallBtn" href="tel:01286663047" class="bg-brand-900/90 hover:bg-brand-800 border border-brand-700/60 text-white py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all tap-active shadow-sm">
+          <i data-lucide="phone-call" class="w-3.5 h-3.5 text-amberAccent-400"></i>
+          <span>اتصال سريع</span>
+        </a>
+        <a id="headerMapBtn" href="https://maps.google.com/?q=41+Mahmoud+Mamdouh+Ahmed+El-Zomor+Nasr+City+Cairo" target="_blank" rel="noopener noreferrer" class="bg-brand-900/90 hover:bg-brand-800 border border-brand-700/60 text-white py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all tap-active shadow-sm">
+          <i data-lucide="map-pin" class="w-3.5 h-3.5 text-emerald-400"></i>
+          <span>اللوكيشن</span>
+        </a>
+        <button id="toggleInfoDrawerBtn" class="bg-brand-900/90 hover:bg-brand-800 border border-brand-700/60 text-white py-2 px-2 rounded-xl flex items-center justify-center gap-1.5 text-xs font-bold transition-all tap-active shadow-sm">
+          <i data-lucide="info" class="w-3.5 h-3.5 text-sky-400"></i>
+          <span>معلومات الفرع</span>
+        </button>
+      </div>
+
+      <!-- درج تفاصيل الفرن والعنوان -->
+      <div id="infoDrawer" class="hidden mt-3 bg-brand-950/95 border border-brand-700/70 rounded-2xl p-3 text-xs space-y-2 text-slate-200">
+        <div class="flex items-start gap-2">
+          <i data-lucide="map-pin" class="w-4 h-4 text-amberAccent-400 flex-shrink-0 mt-0.5"></i>
+          <p class="leading-relaxed">
+            <strong class="text-white block">العنوان بالتفصيل:</strong>
+            41 ش محمود ممدوح من أحمد الزمر - محطة توشيبا - خلف معرض العلو للأثاث - مدينة نصر، القاهرة.
+            <span class="text-amberAccent-300 block text-[11px] font-bold mt-0.5">⚠️ تنبيه: ليس لدينا فروع أخرى في مدينة نصر</span>
+          </p>
+        </div>
+        <div class="flex items-center gap-2 pt-1 border-t border-brand-800">
+          <i data-lucide="phone" class="w-4 h-4 text-emerald-400 flex-shrink-0"></i>
+          <div>
+            <span class="font-bold text-white">الطلبات والدليفري:</span>
+            <span class="text-amberAccent-300 font-mono mr-1">01286663047</span> - 
+            <span class="text-amberAccent-300 font-mono">01099909624</span> - 
+            <span class="text-amberAccent-300 font-mono">22735015</span>
+          </div>
+        </div>
+        <div class="flex items-center gap-1.5 pt-1 border-t border-brand-800 text-[11px] text-yellow-300 font-bold">
+          <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
+          <span>خصم خاص ومميز للشركات، الحفلات، والمجموعات الكبيرة 🍕🎉</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 3. بنر العروض الترويجي -->
+    <section class="p-3">
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-amberAccent-600 via-brand-700 to-brand-900 text-white p-4 shadow-lg border border-amberAccent-500/30">
+        <div class="relative z-10 max-w-[70%]">
+          <span class="inline-flex items-center gap-1 bg-brand-950/80 text-amberAccent-400 text-[10px] font-black px-2 py-0.5 rounded-full mb-1.5 border border-amberAccent-500/30">
+            <i data-lucide="flame" class="w-3 h-3 text-amberAccent-400"></i>
+            أقوى عروض العميد
+          </span>
+          <h2 class="text-sm font-black leading-tight text-white mb-1">بيتزا شرقي سوبريم + فطيرة حلوة هدية</h2>
+          <p class="text-[11px] text-amber-100 font-medium">عجينة مورقة بالسمن البلدي الصافي وأشهى خلطات الجبن واللحوم الطازجة!</p>
+        </div>
+        <div class="absolute -left-3 -bottom-4 w-28 h-28 opacity-90 transform rotate-12 pointer-events-none">
+          <svg viewBox="0 0 100 100" class="w-full h-full drop-shadow-xl" fill="none">
+            <circle cx="50" cy="50" r="45" fill="#f59e0b" stroke="#78350f" stroke-width="3" />
+            <circle cx="50" cy="50" r="38" fill="#dc2626" />
+            <circle cx="35" cy="35" r="7" fill="#fef08a" />
+            <circle cx="65" cy="40" r="8" fill="#fef08a" />
+            <circle cx="45" cy="65" r="7.5" fill="#fef08a" />
+            <circle cx="60" cy="65" r="5" fill="#15803d" />
+            <circle cx="35" cy="55" r="4" fill="#15803d" />
+          </svg>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. شريط البحث الفوري -->
+    <section class="px-3 pb-2 sticky top-[33px] z-30 bg-slate-50/95 backdrop-blur-md pt-1">
+      <div class="relative">
+        <input 
+          id="liveSearchInput" 
+          type="text" 
+          placeholder="ابحث عن بيتزا، فطيرة، كريب، باستا، أو مكونات..." 
+          class="w-full bg-white border border-slate-300 rounded-2xl py-2.5 pr-10 pl-10 text-xs font-semibold focus:outline-none focus:ring-2 focus:ring-brand-700 focus:border-brand-700 shadow-sm transition-all text-slate-800"
+        />
+        <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute right-3.5 top-3 pointer-events-none"></i>
+        <button id="clearSearchBtn" class="hidden absolute left-3 top-2.5 text-slate-400 hover:text-slate-600 bg-slate-100 rounded-full p-1 transition-colors">
+          <i data-lucide="x" class="w-3.5 h-3.5"></i>
+        </button>
+      </div>
+    </section>
+
+    <!-- 5. شريط الأقسام السريع -->
+    <nav class="px-3 pb-2 sticky top-[80px] z-20 bg-slate-50/95 backdrop-blur-md border-b border-slate-200/60">
+      <div id="categoriesContainer" class="flex items-center gap-2 overflow-x-auto no-scrollbar py-1">
+        <!-- Rendered by JS -->
+      </div>
+    </nav>
+
+    <!-- 6. بطاقات عرض المنيو -->
+    <main class="flex-1 px-3 py-3 space-y-3" id="menuCardsContainer">
+      <!-- Injected by JavaScript -->
+    </main>
+
+    <!-- حالة البحث الفارغ -->
+    <div id="emptySearchState" class="hidden px-6 py-14 text-center">
+      <div class="w-16 h-16 bg-brand-50 text-brand-700 rounded-3xl flex items-center justify-center mx-auto mb-3 shadow-inner">
+        <i data-lucide="pizza" class="w-8 h-8"></i>
+      </div>
+      <h3 class="text-sm font-black text-slate-800">لم يتم العثور على نتائج مطابقة!</h3>
+      <p class="text-xs text-slate-500 mt-1">جرب البحث بكلمة أخرى مثل: سجق، فراخ، مشلتت، نوتيلا، رانش</p>
+      <button id="resetSearchBtn" class="mt-4 bg-brand-800 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-md hover:bg-brand-900 transition-all">
+        عرض كافة أصناف المنيو
+      </button>
+    </div>
+
+    <!-- الفوتر الرسمي -->
+    <footer class="mt-8 bg-brand-950 text-slate-300 text-xs py-8 px-4 text-center border-t border-brand-900">
+      <div class="w-10 h-10 rounded-full bg-brand-900 text-amberAccent-400 flex items-center justify-center mx-auto mb-2 font-black border border-brand-800">
+        <i data-lucide="utensils" class="w-5 h-5"></i>
+      </div>
+      <h4 class="font-extrabold text-white text-sm">بيتزا وفطائر العميد - EL AMEED</h4>
+      <p class="text-[11px] text-slate-400 mt-1">أصل الفطير البلدي والبيتزا في مدينة نصر • خدمة 24 ساعة</p>
+      <p class="text-[10px] text-slate-500 mt-4">مشروع منظومة تك &copy; للحلول التقنية والمنيو الذكي</p>
+    </footer>
+
+    <!-- 7. الشريط العائم لسلة المشتريات -->
+    <div id="floatingCartBar" class="hidden fixed bottom-3 left-0 right-0 max-w-md mx-auto z-40 px-3 pointer-events-none">
+      <div class="bg-gradient-to-r from-brand-950 via-brand-900 to-slate-900 text-white rounded-2xl p-3 shadow-2xl border border-brand-700 pointer-events-auto flex items-center justify-between transition-all">
+        <div class="flex items-center gap-3">
+          <div class="relative">
+            <div class="w-11 h-11 rounded-xl bg-amberAccent-500 text-slate-950 flex items-center justify-center font-black shadow-md">
+              <i data-lucide="shopping-bag" class="w-5 h-5"></i>
+            </div>
+            <span id="cartBadgeCount" class="absolute -top-1.5 -right-1.5 bg-brand-700 text-white text-[10px] font-black w-5 h-5 rounded-full flex items-center justify-center border-2 border-brand-950 shadow">
+              0
+            </span>
+          </div>
+          <div>
+            <div class="text-[11px] text-slate-300 font-medium">سلة الطلبات:</div>
+            <div class="text-base font-extrabold text-amberAccent-400 flex items-center gap-1 font-mono">
+              <span id="cartTotalPrice">0</span>
+              <span class="text-xs text-white font-normal font-sans">ج.م</span>
+            </div>
+          </div>
+        </div>
+
+        <button id="openCartModalBtn" class="bg-amberAccent-500 hover:bg-amberAccent-400 text-slate-950 font-black text-xs px-5 py-2.5 rounded-xl transition-all shadow-md flex items-center gap-1.5 tap-active pulse-order-btn">
+          <span>إتمام الطلب</span>
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        </button>
+      </div>
+    </div>
+
+  </div> <!-- نهاية الحاوية المركزية -->
+
+  <!-- ============================================================== -->
+  <!-- 8. نافذة تخصيص الوجبات (Customization Sheet) -->
+  <!-- ============================================================== -->
+  <div id="customizationModal" class="modal-overlay hidden">
+    <div class="bottom-sheet-content">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 relative">
+        <div class="w-12 h-1 bg-slate-300 rounded-full absolute top-2 left-1/2 -translate-x-1/2"></div>
+        <div class="flex items-center gap-2.5 mt-1">
+          <!-- صورة الصنف المصغرة داخل نافذة التخصيص -->
+          <div class="w-12 h-12 rounded-xl overflow-hidden bg-slate-200 border border-slate-300/80 flex-shrink-0 flex items-center justify-center shadow-inner">
+            <img id="customSheetItemImg" src="" alt="" class="w-full h-full object-cover hidden" onerror="this.classList.add('hidden'); document.getElementById('customSheetImgPlaceholder').classList.remove('hidden');" />
+            <div id="customSheetImgPlaceholder" class="w-full h-full bg-brand-900 text-amberAccent-400 flex items-center justify-center">
+              <i data-lucide="utensils" class="w-5 h-5"></i>
+            </div>
+          </div>
+          <div>
+            <h3 id="customSheetItemName" class="font-black text-sm text-slate-900 leading-tight">تخصيص الصنف</h3>
+            <p id="customSheetItemDesc" class="text-[11px] text-slate-500 truncate max-w-[210px] mt-0.5"></p>
+          </div>
+        </div>
+        <button id="closeCustomSheetBtn" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <div class="p-4 overflow-y-auto space-y-4 text-xs">
+        <div id="sizesSelectionWrapper">
+          <label class="font-black text-slate-800 block mb-2 text-xs flex items-center gap-1.5">
+            <i data-lucide="layers" class="w-3.5 h-3.5 text-brand-700"></i>
+            <span>اختر الحجم المطلوب:</span>
+            <span class="text-brand-700 text-[10px]">* مطلوب</span>
+          </label>
+          <div id="sizesRadioContainer" class="space-y-2">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <div id="addonsSelectionWrapper" class="pt-2 border-t border-slate-100">
+          <label class="font-black text-slate-800 block mb-2 text-xs flex items-center gap-1.5">
+            <i data-lucide="plus-circle" class="w-3.5 h-3.5 text-amberAccent-600"></i>
+            <span>إضافات خاصة بالطلب (اختياري):</span>
+          </label>
+          <div id="addonsCheckboxContainer" class="space-y-2">
+            <!-- Injected by JS -->
+          </div>
+        </div>
+
+        <div class="pt-2 border-t border-slate-100">
+          <label class="font-bold text-slate-700 block mb-1 text-[11px]">ملاحظات خاصة على هذا الصنف:</label>
+          <input id="itemCustomNote" type="text" placeholder="مثال: بدون فلفل، تسوية زيادة، كاتشب خارجي..." class="w-full text-xs bg-slate-50 border border-slate-200 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-700 focus:outline-none" />
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-slate-50 flex items-center justify-between gap-3">
+        <div>
+          <span class="text-[10px] text-slate-400 block font-bold">السعر النهائي:</span>
+          <div class="text-base font-black text-brand-700 flex items-center gap-1 font-mono">
+            <span id="customSheetTotalPrice">0</span>
+            <span class="text-xs font-sans">ج.م</span>
+          </div>
+        </div>
+        <button id="confirmCustomizationBtn" class="flex-1 bg-brand-800 hover:bg-brand-900 text-white font-black text-xs py-3 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 tap-active">
+          <i data-lucide="shopping-bag" class="w-4 h-4"></i>
+          <span>إضافة إلى السلة</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 9. نافذة سلة المشتريات وإتمام الطلب (Cart Modal) -->
+  <!-- ============================================================== -->
+  <div id="cartModal" class="modal-overlay hidden">
+    <div class="bottom-sheet-content max-h-[92vh]">
+      <div class="p-4 border-b border-slate-100 flex items-center justify-between bg-slate-50 relative">
+        <div class="w-12 h-1 bg-slate-300 rounded-full absolute top-2 left-1/2 -translate-x-1/2"></div>
+        <div class="flex items-center gap-2 mt-1">
+          <div class="w-8 h-8 rounded-lg bg-brand-100 text-brand-800 flex items-center justify-center">
+            <i data-lucide="shopping-cart" class="w-4 h-4"></i>
+          </div>
+          <h3 class="font-black text-sm text-slate-900">سلة الطلبات والفاتورة</h3>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="clearCartBtn" class="text-xs text-red-600 hover:text-red-700 font-bold px-2 py-1 rounded hover:bg-red-50 flex items-center gap-1">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+            <span>تفريغ</span>
+          </button>
+          <button id="closeCartModalBtn" class="w-8 h-8 rounded-full bg-slate-200 hover:bg-slate-300 text-slate-600 flex items-center justify-center transition-colors">
+            <i data-lucide="x" class="w-4 h-4"></i>
+          </button>
+        </div>
+      </div>
+
+      <div class="p-4 overflow-y-auto flex-1 space-y-4 text-xs">
+        <div id="cartItemsList" class="space-y-2.5">
+          <!-- Rendered by JS -->
+        </div>
+
+        <div id="modalEmptyCart" class="hidden text-center py-10">
+          <div class="w-14 h-14 bg-slate-100 text-slate-400 rounded-full flex items-center justify-center mx-auto mb-2">
+            <i data-lucide="shopping-bag" class="w-6 h-6"></i>
+          </div>
+          <p class="text-sm font-bold text-slate-700">سلتك فارغة حالياً</p>
+          <p class="text-xs text-slate-400 mt-1">اختر أشهى أنواع البيتزا والفطائر لإكمال طلبك!</p>
+        </div>
+
+        <div id="orderTypeSection" class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-3">
+          <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="truck" class="w-3.5 h-3.5 text-brand-700"></i>
+            <span>طريقة استلام الطلب:</span>
+          </div>
+          
+          <div class="grid grid-cols-2 gap-2 bg-slate-200/80 p-1 rounded-xl">
+            <button id="typeDeliveryBtn" type="button" class="py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 bg-brand-800 text-white shadow-sm">
+              <i data-lucide="bike" class="w-3.5 h-3.5"></i>
+              <span>توصيل (دليفري)</span>
+            </button>
+            <button id="typeDineInBtn" type="button" class="py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-700 hover:text-slate-900">
+              <i data-lucide="utensils" class="w-3.5 h-3.5"></i>
+              <span>في الصالة / تيك أواي</span>
+            </button>
+          </div>
+
+          <div id="deliveryFieldsContainer" class="space-y-2.5">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">
+                اختر منطقة التوصيل: <span class="text-red-500">*</span>
+              </label>
+              <select id="deliveryZoneSelect" class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 font-semibold text-slate-800 focus:ring-2 focus:ring-brand-700 focus:outline-none">
+                <!-- Rendered by JS -->
+              </select>
+              <div class="flex items-center justify-between text-[11px] text-slate-500 mt-1 px-1">
+                <span id="zoneTimeEstimate" class="flex items-center gap-1">
+                  <i data-lucide="clock" class="w-3 h-3 text-brand-700"></i>
+                  <span>الوقت التقديري: 25 - 35 دقيقة</span>
+                </span>
+                <span id="zoneDeliveryFeeDisplay" class="font-bold text-brand-700">رسوم التوصيل: 15 ج.م</span>
+              </div>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between mb-1">
+                <label class="block text-[11px] font-bold text-slate-700">العنوان بالتفصيل: <span class="text-red-500">*</span></label>
+                <button type="button" id="detectGpsBtn" class="text-[10px] text-emerald-700 hover:text-emerald-800 font-bold flex items-center gap-1 bg-emerald-50 px-2 py-0.5 rounded-lg border border-emerald-200 tap-active">
+                  <i data-lucide="crosshair" class="w-3 h-3 text-emerald-600"></i>
+                  <span>تحديد موقعي الدقيق (GPS)</span>
+                </button>
+              </div>
+              <textarea id="customerAddressInput" rows="2" placeholder="الشارع، رقم العمارة، رقم الشقة، علامة مميزة..." class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-700 focus:outline-none"></textarea>
+            </div>
+          </div>
+
+          <div id="dineInFieldsContainer" class="hidden space-y-2">
+            <label class="block text-[11px] font-bold text-slate-700">رقم الطاولة أو اسم الاستلام (تيك أواي): <span class="text-red-500">*</span></label>
+            <input id="tableNumberInput" type="text" placeholder="مثال: طاولة 4، أو استلام سفري" class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2.5 focus:ring-2 focus:ring-brand-700 focus:outline-none" />
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2.5">
+          <div class="text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="user" class="w-3.5 h-3.5 text-brand-700"></i>
+            <span>بيانات العميل:</span>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 mb-1">الاسم الكريم: <span class="text-red-500">*</span></label>
+              <input id="customerNameInput" type="text" placeholder="اسمك" class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-brand-700 focus:outline-none" />
+            </div>
+            <div>
+              <label class="block text-[10px] font-bold text-slate-600 mb-1">رقم الهاتف: <span class="text-red-500">*</span></label>
+              <input id="customerPhoneInput" type="tel" placeholder="01xxxxxxxxx" class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-brand-700 focus:outline-none text-left font-mono" dir="ltr" />
+            </div>
+          </div>
+          <div>
+            <label class="block text-[10px] font-bold text-slate-600 mb-1">ملاحظات عامة على الطلب:</label>
+            <input id="generalNotesInput" type="text" placeholder="مثال: الاتصال عند الوصول، عدم رن الجرس..." class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 focus:ring-2 focus:ring-brand-700 focus:outline-none" />
+          </div>
+        </div>
+
+        <div id="promoCodeSection" class="bg-amber-50/70 border border-amber-200/80 rounded-2xl p-3 space-y-2">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-bold text-amber-900 flex items-center gap-1.5">
+              <i data-lucide="tag" class="w-3.5 h-3.5 text-amberAccent-600"></i>
+              <span>كوبون خصم:</span>
+            </span>
+            <span id="couponFeedback" class="text-[10px] font-bold hidden"></span>
+          </div>
+          <div class="flex items-center gap-1.5">
+            <input id="couponInput" type="text" placeholder="اكتب كود الخصم (مثل: AMEED10)" class="uppercase flex-1 text-xs bg-white border border-amber-300 rounded-xl p-2 focus:ring-2 focus:ring-amber-500 focus:outline-none font-mono" />
+            <button id="applyCouponBtn" class="bg-amberAccent-600 hover:bg-amberAccent-700 text-white font-bold text-xs px-3.5 py-2 rounded-xl transition-all shadow-sm">
+              تطبيق
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-slate-50 border border-slate-200 rounded-2xl p-3 space-y-2.5">
+          <label class="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="credit-card" class="w-3.5 h-3.5 text-brand-700"></i>
+            <span>طريقة الدفع:</span>
+          </label>
+          <div class="grid grid-cols-2 gap-2">
+            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50/50">
+              <input type="radio" name="paymentMethod" value="cash" checked class="accent-brand-700" />
+              <span class="font-bold text-slate-800 text-xs">كاش عند الاستلام</span>
+            </label>
+            <label class="flex items-center gap-2 p-2.5 bg-white border border-slate-200 rounded-xl cursor-pointer has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50/50">
+              <input type="radio" name="paymentMethod" value="electronic" class="accent-brand-700" />
+              <span class="font-bold text-slate-800 text-xs">محفظة / إنستاباي</span>
+            </label>
+          </div>
+
+          <div id="electronicPayBox" class="hidden mt-2 p-3 bg-emerald-50 border border-emerald-200 rounded-xl space-y-2 text-[11px] text-emerald-900">
+            <div class="flex items-center justify-between">
+              <span>رقم المحفظة / InstaPay:</span>
+              <button id="copyWalletNumBtn" class="bg-emerald-600 text-white font-bold px-2 py-0.5 rounded text-[10px] flex items-center gap-1 hover:bg-emerald-700">
+                <i data-lucide="copy" class="w-3 h-3"></i>
+                <span>نسخ الرقم</span>
+              </button>
+            </div>
+            <div id="walletNumberDisplay" class="font-mono text-sm font-black text-emerald-950 ltr-dir bg-white/80 p-1.5 rounded-lg border border-emerald-200 text-center">
+              01099909624
+            </div>
+            <p class="text-[10px] text-emerald-700">يرجى تحويل إجمالي الفاتورة ثم إرسال سكرين شوت بالتحويل على الواتساب مع الطلب.</p>
+          </div>
+        </div>
+
+        <div id="cartSummarySection" class="bg-slate-100/90 rounded-2xl p-3.5 space-y-2 text-xs">
+          <div class="flex justify-between text-slate-600">
+            <span>المجموع الفرعي للأصناف:</span>
+            <span class="font-bold text-slate-800 font-mono"><span id="summarySubtotal">0</span> ج.م</span>
+          </div>
+          <div id="summaryDeliveryRow" class="flex justify-between text-slate-600">
+            <span>رسوم التوصيل:</span>
+            <span class="font-bold text-slate-800 font-mono"><span id="summaryDeliveryFee">0</span> ج.م</span>
+          </div>
+          <div id="summaryDiscountRow" class="hidden flex justify-between text-emerald-600 font-bold">
+            <span>خصم الكوبون:</span>
+            <span class="font-mono">-<span id="summaryDiscountAmount">0</span> ج.م</span>
+          </div>
+          <div class="pt-2 border-t border-slate-300 flex justify-between items-center text-sm">
+            <span class="font-black text-slate-900">الإجمالي النهائي المطلوب:</span>
+            <span class="font-black text-brand-700 text-base font-mono"><span id="summaryGrandTotal">0</span> ج.م</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="p-4 border-t border-slate-100 bg-white">
+        <button id="sendWhatsAppOrderBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-black text-sm py-3.5 px-4 rounded-2xl shadow-lg shadow-emerald-600/30 transition-all flex items-center justify-center gap-2 tap-active">
+          <i data-lucide="message-circle" class="w-5 h-5"></i>
+          <span>تأكيد الطلب وإرسال عبر واتساب</span>
+        </button>
+        <p class="text-[10px] text-center text-slate-400 mt-1.5">سيتم فتح محادثة الواتساب مباشرة بطلبك منسقاً مع الفاتورة</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============================================================== -->
+  <!-- 10. لوحة تحكم الإدارة السحابية والملفات (Admin Panel Modal) -->
+  <!-- ============================================================== -->
+  <div id="adminModal" class="modal-overlay hidden" style="align-items: center;">
+    <div class="bg-white w-full max-w-md rounded-3xl max-h-[92vh] flex flex-col shadow-2xl overflow-hidden mx-4">
+      
+      <!-- الرأس -->
+      <div class="p-4 bg-slate-900 text-white flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i data-lucide="shield-check" class="w-5 h-5 text-amberAccent-400"></i>
+          <h3 class="font-black text-sm">لوحة إدارة المنيو والملفات</h3>
+        </div>
+        <button id="closeAdminModalBtn" class="w-8 h-8 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 flex items-center justify-center">
+          <i data-lucide="x" class="w-4 h-4"></i>
+        </button>
+      </div>
+
+      <!-- تسجيل الدخول -->
+      <div id="adminLoginStep" class="p-5 space-y-3.5">
+        <div class="text-center py-2">
+          <div class="w-12 h-12 bg-brand-50 text-brand-700 rounded-2xl flex items-center justify-center mx-auto mb-2">
+            <i data-lucide="lock" class="w-6 h-6"></i>
+          </div>
+          <h4 class="font-bold text-slate-800 text-sm">تسجيل دخول الإدارة</h4>
+          <p class="text-[11px] text-slate-500">كلمة المرور الافتراضية: admin123</p>
+        </div>
+
+        <div class="relative">
+          <input 
+            id="adminPasswordInput" 
+            type="password" 
+            placeholder="اكتب كلمة مرور الإدارة..." 
+            class="w-full text-xs bg-slate-50 border border-slate-300 rounded-xl p-3 pr-10 pl-10 focus:ring-2 focus:ring-brand-700 focus:outline-none"
+          />
+          <i data-lucide="key" class="w-4 h-4 text-slate-400 absolute right-3 top-3.5"></i>
+          <button id="toggleAdminPasswordBtn" type="button" class="absolute left-3 top-3 text-slate-400 hover:text-slate-600">
+            <i data-lucide="eye" id="adminPasswordEyeIcon" class="w-4 h-4"></i>
+          </button>
+        </div>
+
+        <p id="adminKeyboardNotice" class="text-[11px] text-amber-700 bg-amber-50 p-2 rounded-xl hidden leading-tight">
+          تنبيه: أنت تكتب بلغة عربية، يقوم النظام بتحويلها تلقائياً.
+        </p>
+
+        <p id="adminLoginError" class="text-[11px] text-red-600 bg-red-50 p-2 rounded-xl font-bold hidden text-center">
+          كلمة المرور غير صحيحة، حاول مجدداً!
+        </p>
+
+        <button id="adminLoginSubmitBtn" class="w-full bg-brand-800 hover:bg-brand-900 text-white font-black text-xs py-3 rounded-xl transition-all shadow-md">
+          دخول للوحة التحكم
+        </button>
+      </div>
+
+      <!-- أدوات التحكم والرفع -->
+      <div id="adminControlsStep" class="hidden p-4 overflow-y-auto space-y-4 text-xs">
+        
+        <!-- قسم رفع ملف المنيو الذكي (الحل الأضمن والأسهل 100%) -->
+        <div class="bg-gradient-to-br from-blue-50 to-indigo-50 border-2 border-dashed border-blue-300 p-4 rounded-2xl text-center space-y-3">
+          <div class="w-11 h-11 bg-blue-600 text-white rounded-2xl flex items-center justify-center mx-auto shadow-md">
+            <i data-lucide="file-up" class="w-6 h-6"></i>
+          </div>
+          <div>
+            <h4 class="font-black text-sm text-blue-950">رفع ملف المنيو المباشر (Excel / CSV)</h4>
+            <p class="text-[11px] text-blue-700 mt-0.5">يعمل فوراً بدون إنترنت وبدون قيود روابط جوجل نهائياً!</p>
+          </div>
+
+          <input type="file" id="universalFileInput" accept=".xlsx,.xls,.csv,.tsv,.txt" class="hidden" />
+
+          <button type="button" onclick="document.getElementById('universalFileInput').click()" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-2.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 tap-active">
+            <i data-lucide="upload-cloud" class="w-4 h-4"></i>
+            <span>اختر ملف الإكسل أو CSV من جهازك</span>
+          </button>
+
+          <div class="flex items-center justify-between pt-1 text-[11px] text-slate-500 border-t border-blue-200/80">
+            <span>يدعم: .xlsx / .xls / .csv</span>
+            <button id="downloadTemplateBtn" type="button" class="text-blue-700 hover:text-blue-900 font-black flex items-center gap-1">
+              <i data-lucide="download" class="w-3.5 h-3.5"></i>
+              <span>تحميل نموذج إكسل جاهز للتعديل</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- رابط جوجل شيت السحابي (اختياري) -->
+        <div class="space-y-2 bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <label class="font-black text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="link" class="w-4 h-4 text-emerald-600"></i>
+              <span>أو المزامنة عبر رابط Google Sheet:</span>
+            </label>
+            <button id="toggleSheetHelpBtn" type="button" class="text-[10px] font-bold text-blue-600 hover:text-blue-800">
+              طريقة النشر الأكيدة
+            </button>
+          </div>
+
+          <div id="sheetHelpBox" class="hidden p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-[11px] text-blue-900 space-y-1.5 leading-relaxed">
+            <p class="font-bold text-blue-950">📌 أضمن طريقة للربط السحابي (بدون تعليق):</p>
+            <p>1️⃣ في شيت جوجل: اضغط على <b>ملف (File)</b> > <b>مشاركة (Share)</b> > <b>نشر على الويب (Publish to web)</b>.</p>
+            <p>2️⃣ بدلاً من صفحة ويب، اختر: <span class="bg-blue-200 px-1 py-0.5 rounded font-bold">قيم مفصولة بفواصل (CSV)</span>.</p>
+            <p>3️⃣ اضغط <b>نشر (Publish)</b> وانسخ الرابط الذي يظهر وضعه هنا.</p>
+          </div>
+
+          <input 
+            id="sheetMainUrlInput" 
+            type="text" 
+            placeholder="الصق رابط الشيت أو رابط CSV..." 
+            class="w-full text-xs font-mono bg-white border border-slate-300 rounded-xl p-2.5 ltr-dir"
+          />
+          <button id="syncSheetBtn" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 transition-all">
+            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
+            <span>مزامنة الرابط السحابي</span>
+          </button>
+        </div>
+
+        <!-- خيار اللصق اليدوي المباشر للنصوص -->
+        <div class="bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+          <button id="toggleDirectPasteBtn" type="button" class="w-full text-xs font-bold text-slate-700 hover:text-slate-900 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="clipboard-paste" class="w-4 h-4 text-amberAccent-600"></i>
+              <span>أو لصق جدول المنيو كبيانات نصية</span>
+            </span>
+            <i data-lucide="chevron-down" id="directPasteChevron" class="w-3.5 h-3.5 transition-transform"></i>
+          </button>
+          <div id="directPasteWrapper" class="hidden mt-2 space-y-2">
+            <textarea id="directPasteInput" rows="3" placeholder="انسخ جدول المنيو والصقه هنا..." class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 font-mono"></textarea>
+            <button id="importDirectPasteBtn" type="button" class="w-full bg-amberAccent-600 hover:bg-amberAccent-700 text-white font-bold py-1.5 rounded-xl transition-all flex items-center justify-center gap-1">
+              <i data-lucide="check" class="w-3.5 h-3.5"></i>
+              <span>تحديث المنيو من النص الملصوق</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- أرقام الاتصال والمحفظة -->
+        <div class="space-y-2 bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+          <label class="font-black text-slate-800 flex items-center gap-1.5">
+            <i data-lucide="phone" class="w-4 h-4 text-brand-700"></i>
+            <span>بيانات الاتصال والمحفظة:</span>
+          </label>
+          <div>
+            <span class="text-[10px] text-slate-600 block">رقم واتساب استلام الطلبات:</span>
+            <input id="adminWhatsAppInput" type="text" class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 ltr-dir font-mono" />
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-600 block">رقم محفظة فودافون كاش / إنستاباي:</span>
+            <input id="adminWalletInput" type="text" class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 ltr-dir font-mono" />
+          </div>
+          <div>
+            <span class="text-[10px] text-slate-600 block">رابط اللوكيشن الدقيق على خرائط جوجل (Google Maps URL):</span>
+            <input id="adminMapsUrlInput" type="text" placeholder="https://maps.app.goo.gl/..." class="w-full text-xs bg-white border border-slate-300 rounded-xl p-2 ltr-dir font-mono" />
+          </div>
+          <button id="saveContactsBtn" class="w-full bg-brand-800 hover:bg-brand-900 text-white font-bold py-2 rounded-xl transition-all">
+            حفظ أرقام الدفع والواتساب واللوكيشن
+          </button>
+        </div>
+
+        <!-- إدارة كوبونات الخصم (Coupons Manager) -->
+        <div class="space-y-2.5 bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+          <div class="flex items-center justify-between">
+            <label class="font-black text-slate-800 flex items-center gap-1.5">
+              <i data-lucide="tag" class="w-4 h-4 text-amberAccent-600"></i>
+              <span>إدارة كوبونات الخصم:</span>
+            </label>
+            <span id="couponsCountBadge" class="text-[10px] bg-amber-100 text-amber-900 px-2 py-0.5 rounded-full font-bold">0 كود</span>
+          </div>
+
+          <!-- مفتاح إيقاف / تفعيل نظام الكوبونات بالكامل -->
+          <div class="flex items-center justify-between p-2.5 bg-amber-50/70 border border-amber-200 rounded-xl">
+            <div>
+              <span class="font-bold text-slate-800 text-xs block">إتاحة نظام الكوبونات في السلة</span>
+              <span class="text-[10px] text-slate-500">عند الإيقاف، تختفي خانة إدخال الكوبون من سلة الزبائن تماماً</span>
+            </div>
+            <label class="relative inline-flex items-center cursor-pointer">
+              <input type="checkbox" id="enableCouponsToggle" checked class="sr-only peer">
+              <div class="w-9 h-5 bg-slate-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-4 after:w-4 after:transition-all peer-checked:bg-emerald-600"></div>
+            </label>
+          </div>
+
+          <!-- نموذج إضافة كوبون جديد -->
+          <div class="grid grid-cols-12 gap-1.5 pt-1">
+            <input id="newCouponCodeInput" type="text" placeholder="كود الكوبون (مثل: AMEED15)" class="col-span-5 uppercase text-xs bg-white border border-slate-300 rounded-xl p-2 font-mono" />
+            <select id="newCouponTypeSelect" class="col-span-4 text-[11px] bg-white border border-slate-300 rounded-xl p-2 font-bold">
+              <option value="percent">نسبة مئوية (%)</option>
+              <option value="fixed">مبلغ ثابت (ج.م)</option>
+            </select>
+            <input id="newCouponValueInput" type="number" placeholder="القيمة" class="col-span-2 text-xs bg-white border border-slate-300 rounded-xl p-2 text-center" />
+            <button id="addNewCouponBtn" type="button" class="col-span-1 bg-amberAccent-600 hover:bg-amberAccent-700 text-white font-bold rounded-xl flex items-center justify-center tap-active">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <!-- قائمة الكوبونات المتاحة وحالاتها -->
+          <div id="adminCouponsListContainer" class="space-y-1.5 max-h-40 overflow-y-auto pt-1">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- إدارة مناطق التوصيل -->
+        <div class="space-y-2.5 bg-slate-50 border border-slate-200 p-3 rounded-2xl">
+          <label class="font-black text-slate-800 flex items-center justify-between">
+            <span class="flex items-center gap-1.5">
+              <i data-lucide="map" class="w-4 h-4 text-blue-600"></i>
+              <span>إدارة مناطق ورسوم التوصيل:</span>
+            </span>
+            <span id="zonesCountBadge" class="text-[10px] bg-blue-100 text-blue-800 px-2 py-0.5 rounded-full font-bold">0 مناطق</span>
+          </label>
+
+          <div class="grid grid-cols-12 gap-1.5">
+            <input id="newZoneNameInput" type="text" placeholder="اسم المنطقة أو الحي..." class="col-span-7 text-xs bg-white border border-slate-300 rounded-xl p-2" />
+            <input id="newZoneFeeInput" type="number" placeholder="الرسوم" class="col-span-3 text-xs bg-white border border-slate-300 rounded-xl p-2 text-center" />
+            <button id="addNewZoneBtn" class="col-span-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl flex items-center justify-center">
+              <i data-lucide="plus" class="w-4 h-4"></i>
+            </button>
+          </div>
+
+          <div id="adminZonesListContainer" class="space-y-1.5 max-h-36 overflow-y-auto pt-1">
+            <!-- Rendered by JS -->
+          </div>
+        </div>
+
+        <!-- الأزرار السفلية -->
+        <div class="pt-2 border-t border-slate-200 flex gap-2">
+          <button id="resetDefaultsBtn" class="flex-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold py-2 rounded-xl transition-all">
+            استعادة القائمة الأصلية
+          </button>
+          <button id="adminLogoutBtn" class="bg-red-100 hover:bg-red-200 text-red-700 font-bold px-4 py-2 rounded-xl transition-all">
+            خروج
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 11. نافذة التأكيد المخصصة -->
+  <div id="confirmModal" class="modal-overlay hidden" style="align-items: center;">
+    <div class="bg-white rounded-3xl p-5 max-w-xs w-full shadow-2xl text-center space-y-3 mx-4">
+      <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto">
+        <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+      </div>
+      <h4 id="confirmModalTitle" class="font-black text-slate-800 text-sm">تأكيد الإجراء</h4>
+      <p id="confirmModalMessage" class="text-xs text-slate-500 leading-relaxed">هل أنت متأكد من تنفيذ هذا الإجراء؟</p>
+      <div class="grid grid-cols-2 gap-2 pt-2">
+        <button id="confirmCancelBtn" class="bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs py-2 rounded-xl">إلغاء</button>
+        <button id="confirmAcceptBtn" class="bg-red-600 hover:bg-red-700 text-white font-bold text-xs py-2 rounded-xl">نعم، متأكد</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 12. حاوية إشعارات التوست -->
+  <div id="toastContainer" class="fixed top-4 left-1/2 -translate-x-1/2 z-50 w-full max-w-xs pointer-events-none space-y-2"></div>
+
+  <!-- ============================================================== -->
+  <!-- 13. المحرك البرمجي المتكامل للتطبيق (Vanilla JavaScript ES6+) -->
+  <!-- ============================================================== -->
+  <script>
+    // -------------------------------------------------------------
+    // أ) البيانات الافتراضية لمنيو وفطائر العميد
+    // -------------------------------------------------------------
+    const DEFAULT_SETTINGS = {
+      name: "بيتزا وفطائر العميد",
+      nameEn: "EL AMEED",
+      whatsapp: "201286663047",
+      hotline1: "01286663047",
+      hotline2: "01099909624",
+      landline: "0222735015",
+      walletNumber: "01099909624",
+      address: "41 ش محمود ممدوح من أحمد الزمر - محطة توشيبا - خلف معرض العلو للأثاث - مدينة نصر",
+      mapsUrl: "https://maps.google.com/?q=41+Mahmoud+Mamdouh+Ahmed+El-Zomor+Nasr+City+Cairo",
+      minOrder: 0,
+      enableCoupons: true
+    };
+
+    const DEFAULT_DELIVERY_ZONES = [
+      { id: "z1", name: "داخل الحي (محطة توشيبا ومحيط شارع محمود ممدوح)", fee: 15, time: "25 - 35 دقيقة" },
+      { id: "z2", name: "الحي العاشر ومحيط جامع المعلمين والزهراء", fee: 20, time: "30 - 40 دقيقة" },
+      { id: "z3", name: "سويسري والحي الثامن وامتداد حسن المأمون", fee: 25, time: "35 - 45 دقيقة" },
+      { id: "z4", name: "مكرم عبيد وعباس العقاد والحي السابع", fee: 30, time: "40 - 50 دقيقة" },
+      { id: "z5", name: "الحي السادس ومصطفى النحاس ورابعة العدوية", fee: 35, time: "45 - 55 دقيقة" },
+      { id: "z6", name: "الواحة والحي العاشر الجديد وأطراف مدينة نصر", fee: 40, time: "50 - 60 دقيقة" }
+    ];
+
+    const DEFAULT_COUPONS = [
+      { code: "AMEED10", type: "percent", value: 10, status: "مفعل" },
+      { code: "FREEFOOD", type: "fixed", value: 20, status: "مفعل" }
+    ];
+
+    const DEFAULT_CATEGORIES = [
+      { key: "all", name: "الكل", icon: "layout-grid" },
+      { key: "offers", name: "🔥 العروض والتوفير", icon: "flame" },
+      { key: "sweet_feteer", name: "الفطير الحلو", icon: "cake" },
+      { key: "savory_feteer", name: "الفطير الحادق", icon: "pie-chart" },
+      { key: "oriental_pizza", name: "البيتزا الشرقي", icon: "pizza" },
+      { key: "italian_pizza", name: "البيتزا الإيطالي", icon: "circle-dot" },
+      { key: "savory_crepe", name: "الكريب الحادق", icon: "utensils" },
+      { key: "sweet_crepe", name: "الكريب الحلو", icon: "cookie" },
+      { key: "meshaltet", name: "المشلتت البلدي", icon: "award" },
+      { key: "pasta", name: "ركن الباستا", icon: "soup" },
+      { key: "manaqeesh", name: "مناقيش إيطالي", icon: "disc" },
+      { key: "bakery", name: "ركن المعجنات", icon: "wheat" }
+    ];
+
+    const DEFAULT_MENU_ITEMS = [
+      // 1. 🔥 العروض والتوفير
+      {
+        id: "deal_1",
+        categoryKey: "offers",
+        category: "🔥 العروض والتوفير",
+        name: "عرض الشلة: بيتزا سوبر سوبريم + فطيرة شيكولاتة وموز هدية",
+        desc: "بيتزا شرقي سوبريم حجم كبير غنية باللحوم والخضار + فطيرة شيكولاتة وموز وسط مجاناً",
+        price: 210,
+        badge: "أقوى توفير",
+        sizes: null,
+        isAvailable: true
+      },
+      {
+        id: "deal_2",
+        categoryKey: "offers",
+        category: "🔥 العروض والتوفير",
+        name: "كومبو الأكيلة: 2 كريب مكس فراخ + لتر كولا",
+        desc: "2 كريب مكس فراخ (شاورما، استربس، بانيه) محشو بالجبن + كولا مثلجة",
+        price: 215,
+        badge: "الأكثر طلباً",
+        sizes: null,
+        isAvailable: true
+      },
+
+      // 2. الفطير الحلو
+      {
+        id: "sw_1",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة كوكتيل العميد",
+        desc: "خلطة العميد الخاصة من الفواكه والمكسرات والعسل والقشطة البلدي",
+        sizes: { small: 70, medium: 95, large: 140, family: 170 },
+        price: 70,
+        badge: "توقيع المحل",
+        isAvailable: true
+      },
+      {
+        id: "sw_2",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة زبدة وسكر",
+        desc: "فطير مورق بالسمنة والزبدة الفاخرة والسكر البودرة",
+        sizes: { small: 35, medium: 55, large: 95, family: 115 },
+        price: 35,
+        badge: "كلاسيك",
+        isAvailable: true
+      },
+      {
+        id: "sw_3",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة حليب وسكر",
+        desc: "فطير مورق مسقي بالحليب الدافئ ورشة سكر بودرة ناعم",
+        sizes: { small: 40, medium: 65, large: 110, family: 130 },
+        price: 40,
+        badge: "",
+        isAvailable: true
+      },
+      {
+        id: "sw_4",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة مكسرات",
+        desc: "محشوة ومزينة بتشكيلة مكسرات محمصة مقرمشة",
+        sizes: { small: 50, medium: 75, large: 110, family: 140 },
+        price: 50,
+        badge: "مميز",
+        isAvailable: true
+      },
+      {
+        id: "sw_5",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة كريمة ومربى وسكر",
+        desc: "حشوة كريمة غنية مع مربى فاخرة وسكر ناعم",
+        sizes: { small: 55, medium: 80, large: 110, family: 140 },
+        price: 55,
+        badge: "",
+        isAvailable: true
+      },
+      {
+        id: "sw_6",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة مكسرات وكريمة ومربى",
+        desc: "مكس متكامل من الكريمة والمربى والمكسرات المحمصة",
+        sizes: { small: 55, medium: 80, large: 110, family: 140 },
+        price: 55,
+        badge: "",
+        isAvailable: true
+      },
+      {
+        id: "sw_7",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة زبيب وجوز هند",
+        desc: "حشوة الزبيب الفاخر وجوز الهند المبشور مع السمن البلدي",
+        sizes: { small: 50, medium: 80, large: 105, family: 135 },
+        price: 50,
+        badge: "",
+        isAvailable: true
+      },
+      {
+        id: "sw_8",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة فواكه حلو",
+        desc: "تشكيلة قطع فواكه طازجة مسكرة ومسقية شربات",
+        sizes: { small: 60, medium: 75, large: 110, family: 150 },
+        price: 60,
+        badge: "فريش",
+        isAvailable: true
+      },
+      {
+        id: "sw_9",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة شيكولاتة",
+        desc: "شيكولاتة غنية ذائبة تغطي طبقات الفطير المقرمش",
+        sizes: { small: 70, medium: 85, large: 120, family: 150 },
+        price: 70,
+        badge: "شيكو",
+        isAvailable: true
+      },
+      {
+        id: "sw_10",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة شيكولاتة وموز",
+        desc: "شيكولاتة ذائبة مع شرائح الموز الطازج اللذيذ",
+        sizes: { small: 75, medium: 90, large: 130, family: 160 },
+        price: 75,
+        badge: "الأكثر طلباً",
+        isAvailable: true
+      },
+      {
+        id: "sw_11",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة قشطة وعسل",
+        desc: "قشطة بلدي طبيعية طازجة مع عسل النحل الصافي",
+        sizes: { small: 65, medium: 80, large: 120, family: 150 },
+        price: 65,
+        badge: "ملكي",
+        isAvailable: true
+      },
+      {
+        id: "sw_12",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة بسبوسة",
+        desc: "حشوة قطع بسبوسة مرملة مسقية شربات دافئ",
+        sizes: { small: 55, medium: 80, large: 115, family: 150 },
+        price: 55,
+        badge: "",
+        isAvailable: true
+      },
+      {
+        id: "sw_13",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة مكس شيكولاتة",
+        desc: "مزيج فاخر من الشيكولاتة الداكنة والشيكولاتة البيضاء",
+        sizes: { small: 80, medium: 90, large: 130, family: 160 },
+        price: 80,
+        badge: "لعشاق الشيكولاتة",
+        isAvailable: true
+      },
+      {
+        id: "sw_14",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة شيكولاتة هوهوز",
+        desc: "قطع كيك هوهوز الشيكولاتة المغمورة في الفطير الساخن",
+        sizes: { small: 80, medium: 90, large: 130, family: 160 },
+        price: 80,
+        badge: "جديد",
+        isAvailable: true
+      },
+      {
+        id: "sw_15",
+        categoryKey: "sweet_feteer",
+        category: "الفطير الحلو",
+        name: "فطيرة شيكولاتة أوريو",
+        desc: "بسكويت أوريو مقرمش مطحون مع صوص الشيكولاتة اللذيذ",
+        sizes: { small: 75, medium: 90, large: 130, family: 150 },
+        price: 75,
+        badge: "تريند",
+        isAvailable: true
+      },
+
+      // 3. الفطير الحادق
+      {
+        id: "sv_1",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة كوكتيل العميد",
+        desc: "خلطة لحوم، سجق، بسطرمة، مكس جبن رومي وموزريلا، فلفل وطماطم وزيتون",
+        sizes: { small: 85, medium: 110, large: 150, family: 190 },
+        price: 85,
+        badge: "سبيشال",
+        isAvailable: true
+      },
+      {
+        id: "sv_2",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة سجق بلدي",
+        desc: "سجق بلدي شرقي متبل، فلفل، طماطم، زيتون، وجبنة رومي",
+        sizes: { small: 70, medium: 90, large: 135, family: 170 },
+        price: 70,
+        badge: "بلدي أصلي",
+        isAvailable: true
+      },
+      {
+        id: "sv_3",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة بسطرمة",
+        desc: "بسطرمة بلدي ممتازة مع فلفل وطماطم وزيتون ورومي مبشور",
+        sizes: { small: 80, medium: 105, large: 150, family: 190 },
+        price: 80,
+        badge: "الأكثر طلباً",
+        isAvailable: true
+      },
+      {
+        id: "sv_4",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة سوبر سوبريم",
+        desc: "مكس لحوم، سلامي، مشروم، فلفل، طماطم، زيتون، وجبنة رومي",
+        sizes: { small: 85, medium: 110, large: 150, family: 210 },
+        price: 85,
+        badge: "غني بالحشوة",
+        isAvailable: true
+      },
+      {
+        id: "sv_5",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة فراخ",
+        desc: "قطع صدور دجاج متبلة ومطهوة مع خضار وجبنة رومي",
+        sizes: { small: 80, medium: 105, large: 145, family: 190 },
+        price: 80,
+        badge: "",
+        isAvailable: true
+      },
+      {
+        id: "sv_6",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة جمبري",
+        desc: "قطع جمبري مقلي بالخلطة مع فلفل وزيتون وطماطم وجبنة رومي",
+        sizes: { small: 85, medium: 120, large: 160, family: 200 },
+        price: 85,
+        badge: "سي فود",
+        isAvailable: true
+      },
+      {
+        id: "sv_7",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة مشكل جبن",
+        desc: "مكس رومي، شيدر، كيري، وموزريلا مطاطية مع خضار مشكل",
+        sizes: { small: 90, medium: 110, large: 150, family: 210 },
+        price: 90,
+        badge: "كواترو جبن",
+        isAvailable: true
+      },
+      {
+        id: "sv_8",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة فراخ رانش",
+        desc: "قطع دجاج طرية متبلة مع صوص الرانش الغني والجبن الرومي",
+        sizes: { small: 90, medium: 115, large: 160, family: 210 },
+        price: 90,
+        badge: "مميز",
+        isAvailable: true
+      },
+      {
+        id: "sv_9",
+        categoryKey: "savory_feteer",
+        category: "الفطير الحادق",
+        name: "فطيرة فواكه البحر",
+        desc: "مكس جمبري وسبيط وكابوريا مع فلفل وطماطم وزيتون وجبنة رومي",
+        sizes: { medium: 130, large: 170, family: 220 },
+        price: 130,
+        badge: "ملوكي",
+        isAvailable: true
+      },
+
+      // 4. البيتزا الشرقي
+      {
+        id: "op_1",
+        categoryKey: "oriental_pizza",
+        category: "البيتزا الشرقي",
+        name: "بيتزا كوكتيل العميد",
+        desc: "عجينة شرقية مورقة محشوة ومغطاة بمكس اللحوم والجبن والخضار",
+        sizes: { small: 85, medium: 115, large: 150, family: 200 },
+        price: 85,
+        badge: "توقيع العميد",
+        isAvailable: true
+      },
+      {
+        id: "op_2",
+        categoryKey: "oriental_pizza",
+        category: "البيتزا الشرقي",
+        name: "بيتزا سجق بلدي شرقي",
+        desc: "سجق بلدي متبل مع صلصة طماطم شرقية، فلفل، زيتون، وجبن",
+        sizes: { small: 75, medium: 95, large: 140, family: 170 },
+        price: 75,
+        badge: "بلدي",
+        isAvailable: true
+      },
+      {
+        id: "op_3",
+        categoryKey: "oriental_pizza",
+        category: "البيتزا الشرقي",
+        name: "بيتزا بسطرمة شرقي",
+        desc: "بسطرمة فاخرة مع جبنة رومي وموزريلا وفلفل وطماطم وزيتون",
+        sizes: { small: 85, medium: 105, large: 150, family: 190 },
+        price: 85,
+        badge: "الأكثر طلباً",
+        isAvailable: true
+      },
+      {
+        id: "op_4",
+        categoryKey: "oriental_pizza",
+        category: "البيتزا الشرقي",
+        name: "بيتزا شاورمة فراخ باربيكيو",
+        desc: "شاورما دجاج متبلة بصوص الباربيكيو المدخن وجبن شرقي غني",
+        sizes: { small: 90, medium: 110, large: 155, family: 190 },
+        price: 90,
+        badge: "مدخن",
+        isAvailable: true
+      },
+      {
+        id: "op_5",
+        categoryKey: "oriental_pizza",
+        category: "البيتزا الشرقي",
+        name: "بيتزا مشكل جبن شرقي",
+        desc: "4 أنواع أجبان غنية تذوب داخل وخارج العجين الشرقي المورق",
+        sizes: { small: 90, medium: 115, large: 145, family: 200 },
+        price: 90,
+        badge: "كواترو",
+        isAvailable: true
+      },
+
+      // 5. البيتزا الإيطالي
+      {
+        id: "ip_1",
+        categoryKey: "italian_pizza",
+        category: "البيتزا الإيطالي",
+        name: "بيتزا مارجريتا",
+        desc: "صلصة إيطالية فاخرة، جبنة موتزاريلا طبيعية مطاطية، وزعتر بري",
+        sizes: { small: 70, medium: 105, large: 135, family: 170 },
+        price: 70,
+        badge: "أصل الطعم",
+        isAvailable: true
+      },
+      {
+        id: "ip_2",
+        categoryKey: "italian_pizza",
+        category: "البيتزا الإيطالي",
+        name: "بيتزا سلامي (بيبروني)",
+        desc: "شرائح بيبروني سلامي بقري مدخن كلاسيكي مع موتزاريلا غنية",
+        sizes: { small: 90, medium: 115, large: 155, family: 200 },
+        price: 90,
+        badge: "بيبروني",
+        isAvailable: true
+      },
+      {
+        id: "ip_3",
+        categoryKey: "italian_pizza",
+        category: "البيتزا الإيطالي",
+        name: "بيتزا فراخ رانش",
+        desc: "قطع صدور دجاج مع صوص الرانش الأبيض الغني وموتزاريلا سايحة",
+        sizes: { small: 95, medium: 120, large: 170, family: 220 },
+        price: 95,
+        badge: "رانش لافرز",
+        isAvailable: true
+      },
+      {
+        id: "ip_4",
+        categoryKey: "italian_pizza",
+        category: "البيتزا الإيطالي",
+        name: "بيتزا سوبر سوبريم إيطالي",
+        desc: "لحم بقري، سجق، مشروم، سلامي، فلفل أخضر، زيتون، وموتزاريلا",
+        sizes: { small: 100, medium: 120, large: 160, family: 210 },
+        price: 100,
+        badge: "إكسترا حشوة",
+        isAvailable: true
+      },
+      {
+        id: "ip_5",
+        categoryKey: "italian_pizza",
+        category: "البيتزا الإيطالي",
+        name: "بيتزا استربس كرانشي",
+        desc: "أصابع دجاج استربس مقرمشة مع صوصات وجبنة موتزاريلا",
+        sizes: { small: 100, medium: 120, large: 160, family: 220 },
+        price: 100,
+        badge: "كرانشي",
+        isAvailable: true
+      },
+
+      // 6. الكريب الحادق
+      {
+        id: "cr_1",
+        categoryKey: "savory_crepe",
+        category: "الكريب الحادق",
+        name: "كريب شاورمة فراخ",
+        desc: "شاورما دجاج متبلة بخلطة العميد الخاصة مع فلفل وموتزاريلا وصوص",
+        sizes: null,
+        price: 80,
+        badge: "الأكثر طلباً",
+        isAvailable: true
+      },
+      {
+        id: "cr_2",
+        categoryKey: "savory_crepe",
+        category: "الكريب الحادق",
+        name: "كريب كرسبي مقرمش",
+        desc: "دجاج كرسبي سوبر مقرمش مع صوص الجبن والكاتشب وموتزاريلا",
+        sizes: null,
+        price: 90,
+        badge: "كرانشي",
+        isAvailable: true
+      },
+      {
+        id: "cr_3",
+        categoryKey: "savory_crepe",
+        category: "الكريب الحادق",
+        name: "كريب مكس فراخ",
+        desc: "بانيه + شاورما + استربس فراخ مع مكس جبن سايحة",
+        sizes: null,
+        price: 105,
+        badge: "وجبة مشبعة",
+        isAvailable: true
+      },
+      {
+        id: "cr_4",
+        categoryKey: "savory_crepe",
+        category: "الكريب الحادق",
+        name: "كريب سجق شرقي",
+        desc: "سجق بلدي مطهو على الجريل مع فلفل وخضار وموتزاريلا",
+        sizes: null,
+        price: 80,
+        badge: "بلدي",
+        isAvailable: true
+      },
+      {
+        id: "cr_5",
+        categoryKey: "savory_crepe",
+        category: "الكريب الحادق",
+        name: "كريب جمبري مقلي",
+        desc: "قطع جمبري مقلي بالخلطة المقرمشة مع صوص الرانش وموتزاريلا",
+        sizes: null,
+        price: 120,
+        badge: "سي فود",
+        isAvailable: true
+      },
+
+      // 7. الكريب الحلو
+      {
+        id: "cr_sw1",
+        categoryKey: "sweet_crepe",
+        category: "الكريب الحلو",
+        name: "كريب نوتيلا هوهوز",
+        desc: "كريب نوتيلا بلجيكية محشو بقطع كيك هوهوز الشيكولاتة",
+        sizes: null,
+        price: 65,
+        badge: "سويت ديلايت",
+        isAvailable: true
+      },
+      {
+        id: "cr_sw2",
+        categoryKey: "sweet_crepe",
+        category: "الكريب الحلو",
+        name: "كريب نوتيلا أوريو",
+        desc: "نوتيلا غنية مع حبات بسكويت أوريو المطحونة المقرمشة",
+        sizes: null,
+        price: 65,
+        badge: "تريند",
+        isAvailable: true
+      },
+      {
+        id: "cr_sw3",
+        categoryKey: "sweet_crepe",
+        category: "الكريب الحلو",
+        name: "كريب نوتيلا وموز",
+        desc: "كريب نوتيلا دافئ مع شرائح الموز الطازج وصوص كراميل",
+        sizes: null,
+        price: 65,
+        badge: "الأكثر طلباً",
+        isAvailable: true
+      },
+      {
+        id: "cr_sw4",
+        categoryKey: "sweet_crepe",
+        category: "الكريب الحلو",
+        name: "كريب مكس حلو العميد",
+        desc: "نوتيلا + قشطة + عسل + مكسرات + كيك هوهوز وبسكويت أوريو",
+        sizes: null,
+        price: 85,
+        badge: "ملكي",
+        isAvailable: true
+      },
+
+      // 8. المشلتت البلدي الفلاحي
+      {
+        id: "msh_1",
+        categoryKey: "meshaltet",
+        category: "المشلتت البلدي",
+        name: "مشلتت بالسمنة البلدي",
+        desc: "فطير مشلتت فلاحي أصيل مورق بالسمن البلدي الصافي بالكامل",
+        sizes: { small: 85, medium: 120, large: 150, family: 190 },
+        price: 85,
+        badge: "فلاحي أصلي",
+        isAvailable: true
+      },
+      {
+        id: "msh_2",
+        categoryKey: "meshaltet",
+        category: "المشلتت البلدي",
+        name: "مشلتت قشطة وعسل",
+        desc: "مشلتت فلاحي ساخن يقدم مع طبق قشطة بلدي وطبق عسل نحل صافي",
+        sizes: { small: 95, medium: 130, large: 160, family: 200 },
+        price: 95,
+        badge: "إفطار فاخر",
+        isAvailable: true
+      },
+
+      // 9. ركن الباستا
+      {
+        id: "pas_1",
+        categoryKey: "pasta",
+        category: "ركن الباستا",
+        name: "طاجن بنا نجرسكو",
+        desc: "طاجن مكرونة نجرسكو بالفراخ والبشاميل الكريمي والجبن بالفرن",
+        sizes: null,
+        price: 80,
+        badge: "طاجن فرن",
+        isAvailable: true
+      },
+      {
+        id: "pas_2",
+        categoryKey: "pasta",
+        category: "ركن الباستا",
+        name: "إسباجتي جمبري",
+        desc: "مكرونة إسباجتي مع حبات الجمبري وصلصة الطماطم والأعشاب",
+        sizes: null,
+        price: 100,
+        badge: "سي فود",
+        isAvailable: true
+      },
+      {
+        id: "pas_3",
+        categoryKey: "pasta",
+        category: "ركن الباستا",
+        name: "بنا كواترو فوماج (4 أجبان)",
+        desc: "مكرونة بنّا بصوص 4 أجبان غني كريمي ذائب",
+        sizes: null,
+        price: 90,
+        badge: "لعشاق الجبن",
+        isAvailable: true
+      },
+      {
+        id: "pas_4",
+        categoryKey: "pasta",
+        category: "ركن الباستا",
+        name: "مكرونة فرن بالسجق البلدي",
+        desc: "مكرونة فرن بالصلصة مع قطع السجق البلدي المتبل والجبن",
+        sizes: null,
+        price: 70,
+        badge: "بلدي",
+        isAvailable: true
+      },
+
+      // 10. مناقيش إيطالي
+      {
+        id: "man_1",
+        categoryKey: "manaqeesh",
+        category: "مناقيش إيطالي",
+        name: "مناقيش منقوشة مشكل جبن",
+        desc: "مكس أجبان مشكلة غنية تذوب على وجه المنقوشة الإيطالية",
+        sizes: { small: 85, medium: 110, large: 135, family: 190 },
+        price: 85,
+        badge: "مكس جبن",
+        isAvailable: true
+      },
+      {
+        id: "man_2",
+        categoryKey: "manaqeesh",
+        category: "مناقيش إيطالي",
+        name: "مناقيش فراخ",
+        desc: "مناقيش بقطع صدور الدجاج المتبلة مع الجبن الموزريلا والصلصة",
+        sizes: { small: 75, medium: 100, large: 145, family: 170 },
+        price: 75,
+        badge: "محبوب",
+        isAvailable: true
+      },
+
+      // 11. ركن المعجنات والإضافات
+      {
+        id: "bak_1",
+        categoryKey: "bakery",
+        category: "ركن المعجنات",
+        name: "باكيت بطاطس فارم فريتس",
+        desc: "باكيت بطاطس مقلية ذهبية مقرمشة مع بهارات خاصة",
+        sizes: null,
+        price: 25,
+        badge: "جانبي",
+        isAvailable: true
+      },
+      {
+        id: "bak_2",
+        categoryKey: "bakery",
+        category: "ركن المعجنات",
+        name: "رقاق طري (بالكيلو)",
+        desc: "رقاق بلدي طري طازج يومياً لصواني العزومات",
+        sizes: null,
+        price: 45,
+        badge: "فلاحي",
+        isAvailable: true
+      },
+      {
+        id: "bak_3",
+        categoryKey: "bakery",
+        category: "ركن المعجنات",
+        name: "عجينة بيتزا جاهزة",
+        desc: "كرة عجينة بيتزا طازجة ومخمرة جاهزة للخبز المنزلي",
+        sizes: null,
+        price: 25,
+        badge: "طازج",
+        isAvailable: true
+      }
+    ];
+
+    const DEFAULT_ADDONS = [
+      { id: "add_cheese", name: "إكسترا مكس جبن (رومي وموزريلا)", price: 20 },
+      { id: "add_meat", name: "إكسترا لحوم (سجق أو بسطرمة)", price: 25 },
+      { id: "add_fries", name: "باكيت بطاطس فارم فريتس مقلية", price: 25 }
+    ];
+
+    // -------------------------------------------------------------
+    // ب) إدارة الحالة العامة للتطبيق
+    // -------------------------------------------------------------
+    const state = {
+      menuItems: [...DEFAULT_MENU_ITEMS],
+      deliveryZones: [...DEFAULT_DELIVERY_ZONES],
+      settings: { ...DEFAULT_SETTINGS },
+      coupons: [...DEFAULT_COUPONS],
+      cart: {},
+      activeCategory: "all",
+      searchQuery: "",
+      orderType: "delivery",
+      selectedZoneId: DEFAULT_DELIVERY_ZONES[0].id,
+      appliedCoupon: null,
+      customizingItem: null,
+      adminPasswordHash: "240be518fabd2724ddb6f04eeb1da5967448d7e831c08c8fa822809f74c720a9", // sha256 of "admin123"
+      multiSheetUrl: ""
+    };
+
+    // -------------------------------------------------------------
+    // ج) دوال الأمان والتعقيم
+    // -------------------------------------------------------------
+    function sanitize(str) {
+      if (!str) return "";
+      return String(str)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    }
+
+    // محول الروابط الذكي (يدعم روابط Google Drive و Dropbox وروابط الصور العادية تلقائياً)
+    function formatImageUrl(url) {
+      if (!url) return "";
+      url = String(url).trim();
+      
+      // 1. تحويل روابط مشاركة Google Drive العادية إلى روابط CDN مباشرة وسريعة
+      const gDriveMatch = url.match(/\/file\/d\/([a-zA-Z0-9_-]+)/);
+      if (gDriveMatch && gDriveMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${gDriveMatch[1]}`;
+      }
+      const gDriveIdMatch = url.match(/[?&]id=([a-zA-Z0-9_-]+)/);
+      if (url.includes('drive.google.com') && gDriveIdMatch && gDriveIdMatch[1]) {
+        return `https://lh3.googleusercontent.com/d/${gDriveIdMatch[1]}`;
+      }
+
+      // 2. تحويل روابط Dropbox إلى روابط صور مباشرة
+      if (url.includes('dropbox.com')) {
+        return url.replace('?dl=0', '?raw=1').replace('&dl=0', '&raw=1');
+      }
+
+      return url;
+    }
+
+    async function hashSHA256(text) {
+      const enc = new TextEncoder().encode(text);
+      const hashBuf = await crypto.subtle.digest('SHA-256', enc);
+      return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2, '0')).join('');
+    }
+
+    function normalizeKeyboardLayout(str) {
+      const arToEnMap = {
+        'ش': 'a', 'ل': 'b', 'ؤ': 'c', 'ي': 'd', 'ث': 'e', 'ق': 'f', 'ف': 'g', 'غ': 'h',
+        'ه': 'i', 'ت': 'j', 'ن': 'k', 'م': 'l', 'ة': 'm', 'ى': 'n', 'خ': 'o', 'ح': 'p',
+        'ض': 'q', 'ق': 'r', 'س': 's', 'ف': 't', 'ع': 'u', 'ر': 'v', 'ص': 'w', 'ء': 'x',
+        'غ': 'y', 'ئ': 'z', '١': '1', '٢': '2', '٣': '3', '٤': '4', '٥': '5', '٦': '6',
+        '٧': '7', '٨': '8', '٩': '9', '٠': '0'
+      };
+      return str.split('').map(c => arToEnMap[c] || c).join('');
+    }
+
+    function showToast(message, type = "success") {
+      const container = document.getElementById("toastContainer");
+      if (!container) return;
+      const toast = document.createElement("div");
+      toast.className = `p-3 rounded-2xl shadow-xl border text-xs font-bold flex items-center justify-between gap-2 transition-all transform duration-300 pointer-events-auto ${
+        type === "success" ? "bg-emerald-900 text-white border-emerald-600 shadow-emerald-950/40" :
+        type === "error" ? "bg-rose-900 text-white border-rose-600 shadow-rose-950/40" :
+        "bg-slate-900 text-white border-slate-700 shadow-slate-950/40"
+      }`;
+      toast.innerHTML = `
+        <div class="flex items-center gap-2">
+          <i data-lucide="${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'info'}" class="w-4 h-4"></i>
+          <span>${sanitize(message)}</span>
+        </div>
+      `;
+      container.appendChild(toast);
+      if (window.lucide) window.lucide.createIcons();
+      setTimeout(() => {
+        toast.style.opacity = "0";
+        toast.style.transform = "translateY(-10px)";
+        setTimeout(() => toast.remove(), 300);
+      }, 3500);
+    }
+
+    let pendingConfirmCallback = null;
+    function openConfirmModal(title, msg, onConfirm) {
+      document.getElementById("confirmModalTitle").textContent = title;
+      document.getElementById("confirmModalMessage").textContent = msg;
+      pendingConfirmCallback = onConfirm;
+      document.getElementById("confirmModal").classList.remove("hidden");
+    }
+
+    // -------------------------------------------------------------
+    // د) محرك معالجة صفوف الجداول (Rows to Objects)
+    // -------------------------------------------------------------
+    function processMenuRows(rows) {
+      if (!rows || rows.length < 2) return [];
+      const headers = rows[0].map(h => (h !== undefined && h !== null ? String(h) : "").trim().toLowerCase());
+
+      const catIdx   = headers.findIndex(h => h.includes("قسم") || h.includes("category"));
+      const nameIdx  = headers.findIndex(h => h.includes("صنف") || h.includes("اسم") || h.includes("name"));
+      const smallIdx = headers.findIndex(h => h.includes("صغير") || h.includes("small"));
+      const medIdx   = headers.findIndex(h => h.includes("وسط") || h.includes("med"));
+      const lrgIdx   = headers.findIndex(h => h.includes("كبير") || h.includes("large"));
+      const famIdx   = headers.findIndex(h => h.includes("عائلي") || h.includes("fam"));
+      const priceIdx = headers.findIndex(h => h.includes("سعر") || h.includes("price"));
+      const descIdx  = headers.findIndex(h => h.includes("وصف") || h.includes("desc"));
+      const badgeIdx = headers.findIndex(h => h.includes("شارة") || h.includes("badge"));
+      const imgIdx   = headers.findIndex(h => h.includes("صورة") || h.includes("image") || h.includes("رابط") || h.includes("img") || h.includes("photo") || h.includes("pic"));
+      const statIdx  = headers.findIndex(h => h.includes("حالة") || h.includes("status"));
+
+      const items = [];
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || !row[nameIdx]) continue;
+
+        const catName = row[catIdx] ? String(row[catIdx]).trim() : "أخرى";
+        // إنشاء مفتاح تصنيف ديناميكي فريد يدعم أي قسم جديد يضاف في الإكسل (مثل: ركن الجبن)
+        const catKey = "cat_" + catName.replace(/[^\w\u0600-\u06FF]/g, '_');
+
+        let sizesObj = null;
+        if (smallIdx !== -1 && row[smallIdx] && (row[medIdx] || row[lrgIdx])) {
+          sizesObj = {
+            small: parseFloat(row[smallIdx]) || 0,
+            medium: parseFloat(row[medIdx]) || 0,
+            large: parseFloat(row[lrgIdx]) || 0,
+            family: famIdx !== -1 && row[famIdx] ? parseFloat(row[famIdx]) : 0
+          };
+        }
+
+        const basePrice = sizesObj ? sizesObj.small : (parseFloat(row[priceIdx]) || parseFloat(row[smallIdx]) || 0);
+        const imgUrl = (imgIdx !== -1 && row[imgIdx]) ? formatImageUrl(String(row[imgIdx]).trim()) : "";
+
+        items.push({
+          id: "item_up_" + r,
+          categoryKey: catKey,
+          category: catName,
+          name: String(row[nameIdx]).trim(),
+          desc: descIdx !== -1 && row[descIdx] ? String(row[descIdx]).trim() : "",
+          badge: badgeIdx !== -1 && row[badgeIdx] ? String(row[badgeIdx]).trim() : "",
+          imageUrl: imgUrl,
+          sizes: sizesObj,
+          price: basePrice,
+          isAvailable: statIdx !== -1 ? !String(row[statIdx]).includes("غير") : true
+        });
+      }
+      return items;
+    }
+
+    function processDeliveryRows(rows) {
+      if (!rows || rows.length < 2) return [];
+      const headers = rows[0].map(h => (h !== undefined && h !== null ? String(h) : "").trim().toLowerCase());
+
+      const zoneIdx = headers.findIndex(h => h.includes("منطقة") || h.includes("zone"));
+      const feeIdx  = headers.findIndex(h => h.includes("رسوم") || h.includes("fee") || h.includes("سعر"));
+      const timeIdx = headers.findIndex(h => h.includes("وقت") || h.includes("time"));
+
+      const zones = [];
+      for (let r = 1; r < rows.length; r++) {
+        const row = rows[r];
+        if (!row || !row[zoneIdx]) continue;
+        zones.push({
+          id: "zone_up_" + r,
+          name: String(row[zoneIdx]).trim(),
+          fee: parseFloat(row[feeIdx]) || 0,
+          time: timeIdx !== -1 && row[timeIdx] ? String(row[timeIdx]).trim() : "30-45 دقيقة"
+        });
+      }
+      return zones;
+    }
+
+    // -------------------------------------------------------------
+    // هـ) معالجة رفع الملفات محلياً عبر SheetJS (حل مشكلة الرفع 100%)
+    // -------------------------------------------------------------
+    function handleFileUpload(file) {
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = function(e) {
+        try {
+          const data = new Uint8Array(e.target.result);
+          if (typeof XLSX === 'undefined') {
+            showToast("جاري تحميل محرك قراءة الملفات، يرجى المحاولة بعد لحظات...", "error");
+            return;
+          }
+
+          const workbook = XLSX.read(data, { type: 'array' });
+          if (!workbook.SheetNames || workbook.SheetNames.length === 0) {
+            throw new Error("الملف لا يحتوي على أي صفحات صالحة!");
+          }
+
+          let menuRows = null;
+          let deliveryRows = null;
+          let settingsRows = null;
+
+          // فحص التبويبات بالاسم
+          for (const sheetName of workbook.SheetNames) {
+            const cleanName = sheetName.trim();
+            const sheetJson = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { header: 1, defval: "" });
+
+            if (cleanName.includes("منيو") || cleanName.includes("Menu") || cleanName.includes("أصناف")) {
+              menuRows = sheetJson;
+            } else if (cleanName.includes("توصيل") || cleanName.includes("Delivery") || cleanName.includes("مناطق")) {
+              deliveryRows = sheetJson;
+            } else if (cleanName.includes("إعداد") || cleanName.includes("اعداد") || cleanName.includes("Setting")) {
+              settingsRows = sheetJson;
+            }
+          }
+
+          // إذا كان ملفاً بسيطاً من صفحة واحدة
+          if (!menuRows) {
+            menuRows = XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]], { header: 1, defval: "" });
+          }
+
+          const parsedItems = processMenuRows(menuRows);
+          if (parsedItems.length === 0) {
+            throw new Error("لم نتمكن من استخراج الأصناف. تأكد من وجود عمود 'اسم الصنف' و 'السعر'.");
+          }
+
+          state.menuItems = parsedItems;
+
+          if (deliveryRows) {
+            const parsedZones = processDeliveryRows(deliveryRows);
+            if (parsedZones.length > 0) {
+              state.deliveryZones = parsedZones;
+              state.selectedZoneId = parsedZones[0].id;
+            }
+          }
+
+          // قراءة واستيراد تبويب الإعدادات ورابط اللوكيشن
+          if (settingsRows && settingsRows.length > 1) {
+            for (let r = 1; r < settingsRows.length; r++) {
+              const row = settingsRows[r];
+              if (!row || !row[0]) continue;
+              const k = String(row[0]).trim().toLowerCase();
+              const v = row[1] !== undefined && row[1] !== null ? String(row[1]).trim() : "";
+              if (!v) continue;
+              if (k.includes("map") || k.includes("لوكيشن") || k.includes("خريط")) {
+                state.settings.mapsUrl = v;
+              } else if (k.includes("whats") || k.includes("واتس")) {
+                state.settings.whatsapp = v.replace(/\D/g, "");
+              } else if (k.includes("wallet") || k.includes("محفظ") || k.includes("انستا")) {
+                state.settings.walletNumber = v;
+              } else if (k.includes("address") || k.includes("عنوان")) {
+                state.settings.address = v;
+              }
+            }
+            applySettingsToUI();
+            localStorage.setItem("ameed_custom_settings", JSON.stringify(state.settings));
+          }
+
+          // الحفظ في التخزين المحلي
+          localStorage.setItem("ameed_custom_menu", JSON.stringify(state.menuItems));
+          localStorage.setItem("ameed_custom_zones", JSON.stringify(state.deliveryZones));
+
+          renderCategoryTabs();
+          renderMenuCards();
+          renderDeliveryZonesDropdown();
+          renderAdminZones();
+          updateCartCalculation();
+
+          document.getElementById("syncStatusBadge").textContent = "ملف محلي ✓";
+          document.getElementById("adminModal").classList.add("hidden");
+          showToast(`تم استيراد ${parsedItems.length} صنف وتحديث الإعدادات واللوكيشن بنجاح!`, "success");
+
+        } catch (err) {
+          console.error("خطأ قراءة الملف:", err);
+          showToast(err.message || "فشل قراءة الملف. تأكد من صحة التنسيق.", "error");
+        }
+      };
+
+      reader.readAsArrayBuffer(file);
+    }
+
+    // -------------------------------------------------------------
+    // و) تصدير وتحميل نموذج إكسل جاهز (.xlsx)
+    // -------------------------------------------------------------
+    function downloadExcelTemplate() {
+      if (typeof XLSX === 'undefined') {
+        showToast("مكتبة الإكسل غير جاهزة حالياً", "error");
+        return;
+      }
+
+      const wb = XLSX.utils.book_new();
+
+      // ورقة المنيو مع دعم عمود "رابط الصورة"
+      const menuData = [
+        ["القسم", "اسم الصنف", "صغير", "وسط", "كبير", "عائلي", "الوصف", "الشارة", "رابط الصورة", "الحالة"],
+        ...state.menuItems.map(item => [
+          item.category,
+          item.name,
+          item.sizes ? item.sizes.small : item.price,
+          item.sizes ? item.sizes.medium : "",
+          item.sizes ? item.sizes.large : "",
+          item.sizes ? item.sizes.family : "",
+          item.desc || "",
+          item.badge || "",
+          item.imageUrl || "",
+          item.isAvailable ? "متاح" : "غير متوفر"
+        ])
+      ];
+      const wsMenu = XLSX.utils.aoa_to_sheet(menuData);
+      XLSX.utils.book_append_sheet(wb, wsMenu, "المنيو");
+
+      // ورقة التوصيل
+      const deliveryData = [
+        ["اسم المنطقة", "رسوم التوصيل", "وقت التوصيل التقديري"],
+        ...state.deliveryZones.map(z => [z.name, z.fee, z.time])
+      ];
+      const wsDelivery = XLSX.utils.aoa_to_sheet(deliveryData);
+      XLSX.utils.book_append_sheet(wb, wsDelivery, "التوصيل");
+
+      // ورقة الإعدادات (تشمل رابط اللوكيشن الدقيق والعنوان)
+      const settingsData = [
+        ["المفتاح", "القيمة", "ملاحظة"],
+        ["Google_Maps_URL", state.settings.mapsUrl, "رابط اللوكيشن الدقيق على خرائط جوجل"],
+        ["Address", state.settings.address, "العنوان التفصيلي للمطعم"],
+        ["WhatsApp_Number", state.settings.whatsapp, "رقم واتساب استلام الطلبات"],
+        ["Wallet_Number", state.settings.walletNumber, "رقم محفظة فودافون كاش أو إنستاباي"],
+        ["Hotline_1", state.settings.hotline1, "رقم الاتصال السريع"],
+        ["Hotline_2", state.settings.hotline2, "رقم الخط الثاني"]
+      ];
+      const wsSettings = XLSX.utils.aoa_to_sheet(settingsData);
+      XLSX.utils.book_append_sheet(wb, wsSettings, "الإعدادات");
+
+      // تحميل الملف
+      XLSX.writeFile(wb, "منيو_بيتزا_وفطائر_العميد_نموذج.xlsx");
+      showToast("تم تنزيل نموذج الإكسل بنجاح! يمكنك تعديله وإعادة رفعه في أي وقت.", "success");
+    }
+
+    // تطبيق الإعدادات ورابط الخريطة على واجهة المستخدم
+    function applySettingsToUI() {
+      const mapBtn = document.getElementById("headerMapBtn");
+      if (mapBtn && state.settings.mapsUrl) {
+        mapBtn.href = state.settings.mapsUrl;
+      }
+      const adminMapsInp = document.getElementById("adminMapsUrlInput");
+      if (adminMapsInp) adminMapsInp.value = state.settings.mapsUrl || "";
+      
+      const adminWaInp = document.getElementById("adminWhatsAppInput");
+      if (adminWaInp) adminWaInp.value = state.settings.whatsapp || "";
+
+      const adminWalInp = document.getElementById("adminWalletInput");
+      if (adminWalInp) adminWalInp.value = state.settings.walletNumber || "";
+
+      const walletDisplay = document.getElementById("walletNumberDisplay");
+      if (walletDisplay) walletDisplay.textContent = state.settings.walletNumber || "";
+
+      // إظهار أو إخفاء قسم الكوبون في السلة حسب إعدادات التفعيل
+      const promoSection = document.getElementById("promoCodeSection");
+      if (promoSection) {
+        promoSection.classList.toggle("hidden", state.settings.enableCoupons === false);
+      }
+      const couponsToggle = document.getElementById("enableCouponsToggle");
+      if (couponsToggle) {
+        couponsToggle.checked = state.settings.enableCoupons !== false;
+      }
+    }
+
+    // -------------------------------------------------------------
+    // ح) بناء واجهة المستخدم وتصفح المنيو (محرك الأقسام والصور الديناميكي)
+    // -------------------------------------------------------------
+    function getItemCategoryIcon(catName) {
+      if (!catName) return "utensils";
+      const s = String(catName).toLowerCase();
+      if (s.includes("جبن") || s.includes("أجبان") || s.includes("اجبان")) return "disc";
+      if (s.includes("عرض") || s.includes("توفير")) return "flame";
+      if (s.includes("حلو") || s.includes("كيك")) return "cake";
+      if (s.includes("فطير")) return "pie-chart";
+      if (s.includes("بيتزا")) return "pizza";
+      if (s.includes("كريب") || s.includes("ساندوتش") || s.includes("برجر")) return "sandwich";
+      if (s.includes("مشلتت")) return "award";
+      if (s.includes("باستا") || s.includes("مكرونة")) return "soup";
+      if (s.includes("مناقيش")) return "circle-dot";
+      if (s.includes("معجنات") || s.includes("مخبوزات") || s.includes("رقاق")) return "wheat";
+      if (s.includes("مشروب") || s.includes("عصير") || s.includes("كانز")) return "cup-soda";
+      if (s.includes("فراخ") || s.includes("دجاج") || s.includes("لحم") || s.includes("مشاوي")) return "drumstick";
+      if (s.includes("إضاف") || s.includes("صوص") || s.includes("بطاطس")) return "plus-circle";
+      return "utensils";
+    }
+
+    function getDynamicCategories() {
+      const catsMap = new Map();
+      catsMap.set("all", { key: "all", name: "الكل", icon: "layout-grid", count: state.menuItems.length });
+      
+      state.menuItems.forEach(item => {
+        const catName = (item.category && item.category.trim()) ? item.category.trim() : "أخرى";
+        const catKey = item.categoryKey || ("cat_" + catName.replace(/[^\w\u0600-\u06FF]/g, '_'));
+        item.categoryKey = catKey;
+
+        if (!catsMap.has(catKey)) {
+          catsMap.set(catKey, {
+            key: catKey,
+            name: catName,
+            icon: getItemCategoryIcon(catName),
+            count: 0
+          });
+        }
+        catsMap.get(catKey).count++;
+      });
+      
+      return Array.from(catsMap.values());
+    }
+
+    function renderCategoryTabs() {
+      const container = document.getElementById("categoriesContainer");
+      if (!container) return;
+
+      const dynamicCats = getDynamicCategories();
+      
+      // التأكد من أن القسم النشط لا يزال موجوداً
+      if (state.activeCategory !== "all" && !dynamicCats.some(c => c.key === state.activeCategory)) {
+        state.activeCategory = "all";
+      }
+
+      container.innerHTML = dynamicCats.map(cat => {
+        const isActive = state.activeCategory === cat.key;
+        return `
+          <button 
+            data-cat="${cat.key}"
+            class="category-filter-btn flex-shrink-0 flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-bold transition-all tap-active ${
+              isActive 
+                ? "bg-brand-800 text-white shadow-sm ring-2 ring-amberAccent-400" 
+                : "bg-white text-slate-700 hover:bg-slate-100 border border-slate-200"
+            }"
+          >
+            <i data-lucide="${cat.icon}" class="w-3.5 h-3.5 ${isActive ? 'text-amberAccent-400' : 'text-slate-500'}"></i>
+            <span>${sanitize(cat.name)}</span>
+            <span class="text-[10px] px-1.5 py-0.2 rounded-full font-mono ${isActive ? 'bg-brand-950 text-amberAccent-400' : 'bg-slate-100 text-slate-600'}">${cat.count}</span>
+          </button>
+        `;
+      }).join("");
+
+      container.querySelectorAll(".category-filter-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.activeCategory = btn.getAttribute("data-cat");
+          renderCategoryTabs();
+          renderMenuCards();
+        });
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderMenuCards() {
+      const container = document.getElementById("menuCardsContainer");
+      const emptyState = document.getElementById("emptySearchState");
+      if (!container) return;
+
+      let items = state.menuItems;
+
+      if (state.activeCategory !== "all") {
+        items = items.filter(i => (i.categoryKey === state.activeCategory || i.category === state.activeCategory));
+      }
+
+      const q = state.searchQuery.trim().toLowerCase();
+      if (q) {
+        items = items.filter(i => 
+          i.name.toLowerCase().includes(q) || 
+          i.desc.toLowerCase().includes(q) || 
+          i.category.toLowerCase().includes(q)
+        );
+      }
+
+      if (items.length === 0) {
+        container.innerHTML = "";
+        emptyState.classList.remove("hidden");
+        return;
+      }
+
+      emptyState.classList.add("hidden");
+
+      container.innerHTML = items.map(item => {
+        const isAvail = item.isAvailable !== false;
+        const hasSizes = !!item.sizes;
+        const formattedImg = formatImageUrl(item.imageUrl);
+        const hasCustomImage = Boolean(formattedImg && formattedImg.trim());
+
+        let qtyInCart = 0;
+        for (const [_, itm] of Object.entries(state.cart)) {
+          if (itm.id === item.id) qtyInCart += itm.qty;
+        }
+
+        return `
+          <div class="bg-white rounded-2xl p-3.5 shadow-sm border border-slate-200/90 transition-all flex flex-col justify-between gap-3 ${!isAvail ? 'opacity-60 grayscale-[30%]' : ''}">
+            <div class="flex items-start justify-between gap-3">
+              <div class="flex-1">
+                <div class="flex items-center gap-1.5 flex-wrap mb-1">
+                  <span class="text-[10px] px-2 py-0.5 rounded-md bg-brand-50 text-brand-800 border border-brand-200 font-bold">
+                    ${sanitize(item.category)}
+                  </span>
+                  ${item.badge ? `
+                    <span class="text-[10px] bg-red-600 text-white font-black px-1.5 py-0.5 rounded-md flex items-center gap-0.5">
+                      <i data-lucide="sparkles" class="w-2.5 h-2.5"></i>
+                      ${sanitize(item.badge)}
+                    </span>
+                  ` : ''}
+                  ${!isAvail ? `
+                    <span class="text-[10px] bg-slate-200 text-slate-600 font-bold px-1.5 py-0.5 rounded-md">غير متوفر اليوم</span>
+                  ` : ''}
+                </div>
+                <h3 class="font-bold text-slate-900 text-sm leading-snug">${sanitize(item.name)}</h3>
+                ${item.desc ? `
+                  <p class="text-xs text-slate-500 mt-1 line-clamp-2 leading-relaxed">${sanitize(item.desc)}</p>
+                ` : ''}
+              </div>
+
+              <!-- صورة الصنف مع حماية كاملة عند عدم التوفر أو فشل التحميل -->
+              <div class="w-20 h-20 rounded-2xl overflow-hidden bg-slate-100 flex-shrink-0 relative shadow-sm border border-slate-200/80 flex items-center justify-center">
+                ${hasCustomImage ? `
+                  <img 
+                    src="${sanitize(formattedImg)}" 
+                    alt="${sanitize(item.name)}" 
+                    class="w-full h-full object-cover" 
+                    loading="lazy" 
+                    onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';" 
+                  />
+                  <div class="w-full h-full bg-gradient-to-br from-brand-900 to-brand-950 flex flex-col items-center justify-center text-amberAccent-400 p-1" style="display:none;">
+                    <i data-lucide="${getItemCategoryIcon(item.category)}" class="w-7 h-7 mb-0.5"></i>
+                    <span class="text-[8px] font-bold text-white">العميد</span>
+                  </div>
+                ` : `
+                  <div class="w-full h-full bg-gradient-to-br from-brand-900 to-brand-950 flex flex-col items-center justify-center text-amberAccent-400 p-1">
+                    <i data-lucide="${getItemCategoryIcon(item.category)}" class="w-7 h-7 mb-0.5"></i>
+                    <span class="text-[8px] font-bold text-white">العميد</span>
+                  </div>
+                `}
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-100">
+              <div class="flex items-baseline gap-1">
+                <span class="text-[11px] text-slate-400 font-medium">${hasSizes ? 'يبدأ من:' : 'السعر:'}</span>
+                <span class="text-lg font-black text-brand-800 font-mono">${item.price}</span>
+                <span class="text-xs font-bold text-slate-500">ج.م</span>
+              </div>
+
+              <div>
+                ${!isAvail ? `
+                  <button disabled class="bg-slate-200 text-slate-400 font-bold text-xs px-3 py-1.5 rounded-xl cursor-not-allowed">غير متاح</button>
+                ` : hasSizes ? `
+                  <button 
+                    onclick="openCustomizationSheet('${item.id}')"
+                    class="bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3 py-2 rounded-xl flex items-center gap-1 tap-active shadow-sm"
+                  >
+                    <i data-lucide="sliders-horizontal" class="w-3.5 h-3.5 text-amberAccent-400"></i>
+                    <span>تخصيص الحجم ${qtyInCart > 0 ? `(${qtyInCart})` : ''}</span>
+                  </button>
+                ` : qtyInCart === 0 ? `
+                  <button 
+                    onclick="quickAddToCart('${item.id}')"
+                    class="bg-brand-800 hover:bg-brand-900 text-white font-bold text-xs px-3.5 py-2 rounded-xl flex items-center gap-1.5 tap-active shadow-sm"
+                  >
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    <span>إضافة للسلة</span>
+                  </button>
+                ` : `
+                  <div class="flex items-center bg-slate-100 border border-slate-300 rounded-xl p-0.5 shadow-inner">
+                    <button onclick="decrementQuickItem('${item.id}')" class="w-7 h-7 rounded-lg bg-white text-slate-700 flex items-center justify-center shadow-sm tap-active">
+                      <i data-lucide="${qtyInCart === 1 ? 'trash-2' : 'minus'}" class="w-3.5 h-3.5 ${qtyInCart === 1 ? 'text-red-500' : ''}"></i>
+                    </button>
+                    <span class="w-7 text-center font-black text-xs text-slate-900 font-mono">${qtyInCart}</span>
+                    <button onclick="quickAddToCart('${item.id}')" class="w-7 h-7 rounded-lg bg-brand-800 text-white flex items-center justify-center shadow-sm tap-active">
+                      <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+                    </button>
+                  </div>
+                `}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    // -------------------------------------------------------------
+    // ط) محرك التخصيص بالأحجام والإضافات
+    // -------------------------------------------------------------
+    window.openCustomizationSheet = function(itemId) {
+      const item = state.menuItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      state.customizingItem = item;
+      document.getElementById("customSheetItemName").textContent = item.name;
+      document.getElementById("customSheetItemDesc").textContent = item.desc || item.category;
+
+      // تحديث صورة الصنف داخل نافذة التخصيص
+      const imgPreview = document.getElementById("customSheetItemImg");
+      const imgPlaceholder = document.getElementById("customSheetImgPlaceholder");
+      const cleanImg = formatImageUrl(item.imageUrl);
+      if (cleanImg && cleanImg.trim()) {
+        imgPreview.src = cleanImg;
+        imgPreview.classList.remove("hidden");
+        imgPlaceholder.classList.add("hidden");
+      } else {
+        imgPreview.classList.add("hidden");
+        imgPlaceholder.classList.remove("hidden");
+        const placeholderIcon = imgPlaceholder.querySelector("i");
+        if (placeholderIcon) placeholderIcon.setAttribute("data-lucide", getItemCategoryIcon(item.category));
+      }
+
+      const radioContainer = document.getElementById("sizesRadioContainer");
+      if (item.sizes) {
+        document.getElementById("sizesSelectionWrapper").classList.remove("hidden");
+        const sizeLabels = { small: "صغير", medium: "وسط", large: "كبير", family: "عائلي" };
+        
+        radioContainer.innerHTML = Object.entries(item.sizes)
+          .filter(([_, price]) => price > 0)
+          .map(([key, price], idx) => `
+            <label class="flex items-center justify-between p-2.5 rounded-xl border border-slate-200 bg-white cursor-pointer has-[:checked]:border-brand-700 has-[:checked]:bg-brand-50/50">
+              <div class="flex items-center gap-2">
+                <input type="radio" name="customSizeRadio" value="${key}" data-price="${price}" data-label="${sizeLabels[key]}" ${idx === 0 ? 'checked' : ''} class="accent-brand-700" onchange="calculateCustomSheetTotal()" />
+                <span class="font-bold text-slate-800">${sizeLabels[key]}</span>
+              </div>
+              <span class="font-bold text-brand-800 font-mono">${price} ج.م</span>
+            </label>
+          `).join("");
+      } else {
+        document.getElementById("sizesSelectionWrapper").classList.add("hidden");
+      }
+
+      const addonContainer = document.getElementById("addonsCheckboxContainer");
+      addonContainer.innerHTML = DEFAULT_ADDONS.map(addon => `
+        <label class="flex items-center justify-between p-2 rounded-xl border border-slate-200 bg-white cursor-pointer has-[:checked]:border-amberAccent-500 has-[:checked]:bg-amber-50/50">
+          <div class="flex items-center gap-2">
+            <input type="checkbox" name="customAddonCheckbox" value="${addon.id}" data-name="${addon.name}" data-price="${addon.price}" class="accent-amberAccent-600" onchange="calculateCustomSheetTotal()" />
+            <span class="font-semibold text-slate-700 text-xs">${addon.name}</span>
+          </div>
+          <span class="font-bold text-amber-900 font-mono">+${addon.price} ج.م</span>
+        </label>
+      `).join("");
+
+      document.getElementById("itemCustomNote").value = "";
+      calculateCustomSheetTotal();
+      document.getElementById("customizationModal").classList.remove("hidden");
+      if (window.lucide) window.lucide.createIcons();
+    };
+
+    window.calculateCustomSheetTotal = function() {
+      if (!state.customizingItem) return;
+      let total = 0;
+
+      if (state.customizingItem.sizes) {
+        const checkedSize = document.querySelector('input[name="customSizeRadio"]:checked');
+        if (checkedSize) total += parseFloat(checkedSize.getAttribute("data-price")) || 0;
+      } else {
+        total += state.customizingItem.price;
+      }
+
+      document.querySelectorAll('input[name="customAddonCheckbox"]:checked').forEach(cb => {
+        total += parseFloat(cb.getAttribute("data-price")) || 0;
+      });
+
+      document.getElementById("customSheetTotalPrice").textContent = total;
+    };
+
+    document.getElementById("closeCustomSheetBtn").addEventListener("click", () => {
+      document.getElementById("customizationModal").classList.add("hidden");
+    });
+
+    document.getElementById("confirmCustomizationBtn").addEventListener("click", () => {
+      if (!state.customizingItem) return;
+      const item = state.customizingItem;
+
+      let sizeLabel = "";
+      let sizePrice = item.price;
+      if (item.sizes) {
+        const checkedSize = document.querySelector('input[name="customSizeRadio"]:checked');
+        if (checkedSize) {
+          sizeLabel = checkedSize.getAttribute("data-label");
+          sizePrice = parseFloat(checkedSize.getAttribute("data-price"));
+        }
+      }
+
+      const addons = [];
+      let addonsSum = 0;
+      document.querySelectorAll('input[name="customAddonCheckbox"]:checked').forEach(cb => {
+        addons.push(cb.getAttribute("data-name"));
+        addonsSum += parseFloat(cb.getAttribute("data-price"));
+      });
+
+      const note = document.getElementById("itemCustomNote").value.trim();
+      const unitPrice = sizePrice + addonsSum;
+      const cartKey = `${item.id}_${sizeLabel}_${addons.sort().join('|')}_${note}`;
+
+      if (state.cart[cartKey]) {
+        state.cart[cartKey].qty++;
+      } else {
+        state.cart[cartKey] = {
+          id: item.id,
+          name: item.name,
+          sizeLabel,
+          sizePrice,
+          addons,
+          note,
+          unitPrice,
+          qty: 1
+        };
+      }
+
+      localStorage.setItem("ameed_cart", JSON.stringify(state.cart));
+      document.getElementById("customizationModal").classList.add("hidden");
+      renderMenuCards();
+      updateCartCalculation();
+      showToast(`تمت إضافة ${item.name} إلى السلة!`, "success");
+    });
+
+    // -------------------------------------------------------------
+    // ي) سلة المشتريات والطلبات
+    // -------------------------------------------------------------
+    window.quickAddToCart = function(itemId) {
+      const item = state.menuItems.find(i => i.id === itemId);
+      if (!item) return;
+
+      const cartKey = `${item.id}_standard`;
+      if (state.cart[cartKey]) {
+        state.cart[cartKey].qty++;
+      } else {
+        state.cart[cartKey] = {
+          id: item.id,
+          name: item.name,
+          sizeLabel: "",
+          sizePrice: item.price,
+          addons: [],
+          note: "",
+          unitPrice: item.price,
+          qty: 1
+        };
+      }
+
+      localStorage.setItem("ameed_cart", JSON.stringify(state.cart));
+      renderMenuCards();
+      updateCartCalculation();
+    };
+
+    window.decrementQuickItem = function(itemId) {
+      const cartKey = `${itemId}_standard`;
+      if (!state.cart[cartKey]) return;
+
+      state.cart[cartKey].qty--;
+      if (state.cart[cartKey].qty <= 0) {
+        delete state.cart[cartKey];
+      }
+
+      localStorage.setItem("ameed_cart", JSON.stringify(state.cart));
+      renderMenuCards();
+      updateCartCalculation();
+    };
+
+    window.updateCartItemQuantity = function(cartKey, change) {
+      if (!state.cart[cartKey]) return;
+      state.cart[cartKey].qty += change;
+      if (state.cart[cartKey].qty <= 0) {
+        delete state.cart[cartKey];
+      }
+      localStorage.setItem("ameed_cart", JSON.stringify(state.cart));
+      renderMenuCards();
+      renderCartModalItems();
+      updateCartCalculation();
+    };
+
+    function calculateCartTotals() {
+      let count = 0;
+      let subtotal = 0;
+
+      for (const item of Object.values(state.cart)) {
+        count += item.qty;
+        subtotal += (item.unitPrice * item.qty);
+      }
+
+      let deliveryFee = 0;
+      if (state.orderType === "delivery") {
+        const zone = state.deliveryZones.find(z => z.id === state.selectedZoneId) || state.deliveryZones[0];
+        deliveryFee = zone ? zone.fee : 0;
+      }
+
+      let discount = 0;
+      if (state.appliedCoupon) {
+        if (state.appliedCoupon.type === "percent") {
+          discount = Math.round((subtotal * state.appliedCoupon.value) / 100);
+        } else if (state.appliedCoupon.type === "fixed") {
+          discount = Math.min(state.appliedCoupon.value, subtotal);
+        }
+      }
+
+      const grandTotal = Math.max(0, subtotal + deliveryFee - discount);
+      return { count, subtotal, deliveryFee, discount, grandTotal };
+    }
+
+    function updateCartCalculation() {
+      const { count, subtotal, deliveryFee, discount, grandTotal } = calculateCartTotals();
+
+      const bar = document.getElementById("floatingCartBar");
+      const badge = document.getElementById("cartBadgeCount");
+      const priceText = document.getElementById("cartTotalPrice");
+      if (bar) bar.classList.toggle("hidden", count === 0);
+      if (badge) badge.textContent = count;
+      if (priceText) priceText.textContent = grandTotal;
+
+      document.getElementById("summarySubtotal").textContent = subtotal;
+      document.getElementById("summaryDeliveryFee").textContent = deliveryFee;
+      document.getElementById("summaryGrandTotal").textContent = grandTotal;
+
+      const delRow = document.getElementById("summaryDeliveryRow");
+      if (delRow) delRow.classList.toggle("hidden", state.orderType !== "delivery");
+
+      const discRow = document.getElementById("summaryDiscountRow");
+      const discAmt = document.getElementById("summaryDiscountAmount");
+      if (discRow) {
+        discRow.classList.toggle("hidden", discount <= 0);
+        if (discAmt) discAmt.textContent = discount;
+      }
+    }
+
+    function renderCartModalItems() {
+      const container = document.getElementById("cartItemsList");
+      const emptyState = document.getElementById("modalEmptyCart");
+      const entries = Object.entries(state.cart);
+
+      if (entries.length === 0) {
+        container.innerHTML = "";
+        emptyState.classList.remove("hidden");
+        return;
+      }
+
+      emptyState.classList.add("hidden");
+      container.innerHTML = entries.map(([key, itm]) => `
+        <div class="p-3 bg-slate-50 border border-slate-200 rounded-2xl flex items-center justify-between gap-3">
+          <div class="flex-1">
+            <h4 class="font-extrabold text-slate-900 text-xs">${sanitize(itm.name)}</h4>
+            ${itm.sizeLabel ? `<span class="text-[10px] bg-brand-100 text-brand-800 font-bold px-1.5 py-0.2 rounded mt-0.5 inline-block">حجم: ${sanitize(itm.sizeLabel)}</span>` : ''}
+            ${itm.addons && itm.addons.length > 0 ? `<p class="text-[10px] text-amber-700 font-bold mt-0.5">+ ${itm.addons.map(sanitize).join('، ')}</p>` : ''}
+            ${itm.note ? `<p class="text-[10px] text-slate-500 italic mt-0.5">ملاحظة: ${sanitize(itm.note)}</p>` : ''}
+            <p class="text-[11px] font-bold text-slate-600 font-mono mt-1">${itm.unitPrice} ج.م × ${itm.qty} = <span class="text-brand-800">${itm.unitPrice * itm.qty} ج.م</span></p>
+          </div>
+
+          <div class="flex items-center bg-white border border-slate-300 rounded-xl p-0.5 shadow-sm">
+            <button onclick="updateCartItemQuantity('${key}', -1)" class="w-6 h-6 flex items-center justify-center text-slate-600 hover:bg-slate-100 rounded">
+              <i data-lucide="${itm.qty === 1 ? 'trash-2' : 'minus'}" class="w-3.5 h-3.5 ${itm.qty === 1 ? 'text-red-500' : ''}"></i>
+            </button>
+            <span class="w-6 text-center font-bold text-xs font-mono">${itm.qty}</span>
+            <button onclick="updateCartItemQuantity('${key}', 1)" class="w-6 h-6 flex items-center justify-center bg-brand-800 text-white rounded">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i>
+            </button>
+          </div>
+        </div>
+      `).join("");
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    function renderDeliveryZonesDropdown() {
+      const select = document.getElementById("deliveryZoneSelect");
+      if (!select) return;
+
+      select.innerHTML = state.deliveryZones.map(z => `
+        <option value="${z.id}" ${z.id === state.selectedZoneId ? 'selected' : ''}>
+          ${sanitize(z.name)} (${z.fee} ج.م)
+        </option>
+      `).join("");
+
+      updateZoneDisplay();
+    }
+
+    // -------------------------------------------------------------
+    // ي.2) إدارة كوبونات الخصم من لوحة التحكم
+    // -------------------------------------------------------------
+    function renderAdminCoupons() {
+      const container = document.getElementById("adminCouponsListContainer");
+      const badge = document.getElementById("couponsCountBadge");
+      if (!container) return;
+
+      badge.textContent = `${state.coupons.length} كود`;
+      container.innerHTML = state.coupons.map(c => {
+        const isActive = c.status === "مفعل";
+        return `
+          <div class="flex items-center justify-between p-2 rounded-xl bg-slate-100 border border-slate-200">
+            <div>
+              <div class="flex items-center gap-1.5">
+                <span class="font-mono font-bold text-slate-800 text-xs">${sanitize(c.code)}</span>
+                <span class="text-[9px] font-bold px-1.5 py-0.2 rounded ${isActive ? 'bg-emerald-100 text-emerald-800' : 'bg-red-100 text-red-800'}">
+                  ${isActive ? 'مفعل' : 'معطل'}
+                </span>
+              </div>
+              <span class="text-[10px] text-slate-500 font-mono">
+                خصم: ${c.type === 'percent' ? c.value + '%' : c.value + ' ج.م'}
+              </span>
+            </div>
+            <div class="flex items-center gap-1.5">
+              <button onclick="toggleCouponStatus('${c.code}')" class="px-2 py-1 text-[10px] font-bold rounded-lg transition-colors ${isActive ? 'bg-amber-100 text-amber-800 hover:bg-amber-200' : 'bg-emerald-100 text-emerald-800 hover:bg-emerald-200'}">
+                ${isActive ? 'إيقاف ⏸️' : 'تفعيل ▶️'}
+              </button>
+              <button onclick="deleteCoupon('${c.code}')" class="text-red-500 hover:text-red-700 p-1" title="حذف الكوبون">
+                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+              </button>
+            </div>
+          </div>
+        `;
+      }).join("");
+
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    window.toggleCouponStatus = function(code) {
+      const coupon = state.coupons.find(c => c.code === code);
+      if (coupon) {
+        coupon.status = coupon.status === "مفعل" ? "معطل" : "مفعل";
+        if (state.appliedCoupon && state.appliedCoupon.code === code && coupon.status === "معطل") {
+          state.appliedCoupon = null;
+          updateCartCalculation();
+        }
+        localStorage.setItem("ameed_custom_coupons", JSON.stringify(state.coupons));
+        renderAdminCoupons();
+        showToast(`تم ${coupon.status === "مفعل" ? "تفعيل" : "إيقاف"} الكوبون ${code} بنجاح`, "info");
+      }
+    };
+
+    window.deleteCoupon = function(code) {
+      state.coupons = state.coupons.filter(c => c.code !== code);
+      if (state.appliedCoupon && state.appliedCoupon.code === code) {
+        state.appliedCoupon = null;
+        updateCartCalculation();
+      }
+      localStorage.setItem("ameed_custom_coupons", JSON.stringify(state.coupons));
+      renderAdminCoupons();
+      showToast(`تم حذف الكوبون ${code}`, "info");
+    };
+
+    function updateZoneDisplay() {
+      const zone = state.deliveryZones.find(z => z.id === state.selectedZoneId) || state.deliveryZones[0];
+      if (zone) {
+        document.getElementById("zoneDeliveryFeeDisplay").textContent = `رسوم التوصيل: ${zone.fee} ج.م`;
+        document.getElementById("zoneTimeEstimate").innerHTML = `
+          <i data-lucide="clock" class="w-3 h-3 text-brand-700"></i>
+          <span>الوقت التقديري: ${sanitize(zone.time || '30 - 45 دقيقة')}</span>
+        `;
+        if (window.lucide) window.lucide.createIcons();
+      }
+    }
+
+    // -------------------------------------------------------------
+    // ك) إرسال الفاتورة عبر واتساب
+    // -------------------------------------------------------------
+    function sendWhatsAppOrder() {
+      const entries = Object.entries(state.cart);
+      if (entries.length === 0) {
+        showToast("سلة طلباتك فارغة حالياً!", "error");
+        return;
+      }
+
+      const { subtotal, deliveryFee, discount, grandTotal } = calculateCartTotals();
+
+      let orderMethodInfo = "";
+      if (state.orderType === "delivery") {
+        const name = document.getElementById("customerNameInput").value.trim();
+        const phone = document.getElementById("customerPhoneInput").value.trim();
+        const address = document.getElementById("customerAddressInput").value.trim();
+        const zone = state.deliveryZones.find(z => z.id === state.selectedZoneId);
+
+        if (!name || !phone || !address) {
+          showToast("يرجى كتابة الاسم ورقم الهاتف والعنوان بالتفصيل!", "error");
+          return;
+        }
+
+        orderMethodInfo = `🛵 *نوع الطلب:* توصيل (دليفري)
+👤 *اسم العميل:* ${name}
+📞 *رقم الهاتف:* ${phone}
+📍 *منطقة التوصيل:* ${zone ? zone.name : 'غير محدد'} (${deliveryFee} ج.م)
+🏠 *العنوان بالتفصيل:* ${address}`;
+      } else {
+        const table = document.getElementById("tableNumberInput").value.trim();
+        if (!table) {
+          showToast("يرجى كتابة رقم الطاولة أو اسم الاستلام!", "error");
+          return;
+        }
+        orderMethodInfo = `🍽️ *نوع الطلب:* داخل الصالة / تيك أواي
+🪑 *رقم الطاولة / الاسم:* ${table}`;
+      }
+
+      const payRadio = document.querySelector('input[name="paymentMethod"]:checked');
+      const payMethod = payRadio && payRadio.value === "electronic" ? "تحويل محفظة إلكترونية / إنستاباي" : "كاش عند الاستلام";
+      const notes = document.getElementById("generalNotesInput").value.trim();
+
+      const itemsList = entries.map(([_, itm], i) => {
+        let line = `${i + 1}. *${itm.name}*`;
+        if (itm.sizeLabel) line += ` [حجم: ${itm.sizeLabel}]`;
+        if (itm.addons && itm.addons.length > 0) line += ` (+${itm.addons.join('، ')})`;
+        if (itm.note) line += ` - ملاحظة: ${itm.note}`;
+        line += ` × ${itm.qty} = ${itm.unitPrice * itm.qty} ج.م`;
+        return line;
+      }).join("\n");
+
+      const invoice = `🍕 *طلب جديد من منيو بيتزا وفطائر العميد* 🍕
+--------------------------------
+${orderMethodInfo}
+💳 *طريقة الدفع:* ${payMethod}
+--------------------------------
+🛒 *تفاصيل الأصناف المطلوبة:*
+${itemsList}
+--------------------------------
+💰 *المجموع الفرعي:* ${subtotal} ج.م
+${state.orderType === "delivery" ? `🛵 *رسوم التوصيل:* ${deliveryFee} ج.م\n` : ''}${discount > 0 ? `🎁 *خصم الكوبون:* -${discount} ج.م\n` : ''}💵 *الإجمالي النهائي المطلوب:* ${grandTotal} ج.م
+${notes ? `--------------------------------\n📝 *ملاحظات خاصة:* ${notes}\n` : ''}--------------------------------
+🕒 *التوقيت:* ${new Date().toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })}`;
+
+      const url = `https://wa.me/${state.settings.whatsapp}?text=${encodeURIComponent(invoice)}`;
+      window.open(url, "_blank");
+      showToast("جاري فتح واتساب لإرسال الفاتورة للمطعم...", "success");
+    }
+
+    // -------------------------------------------------------------
+    // ل) إدارة لوحة التحكم والمناطق
+    // -------------------------------------------------------------
+    function renderAdminZones() {
+      const container = document.getElementById("adminZonesListContainer");
+      const badge = document.getElementById("zonesCountBadge");
+      if (!container) return;
+
+      badge.textContent = `${state.deliveryZones.length} مناطق`;
+      container.innerHTML = state.deliveryZones.map(z => `
+        <div class="flex items-center justify-between p-2 rounded-xl bg-slate-100 border border-slate-200">
+          <div>
+            <span class="font-bold text-slate-800 text-[11px] block">${sanitize(z.name)}</span>
+            <span class="text-[10px] text-slate-500 font-mono">${z.fee} ج.م • ${sanitize(z.time || '')}</span>
+          </div>
+          <button onclick="deleteDeliveryZone('${z.id}')" class="text-red-500 hover:text-red-700 p-1" title="حذف المنطقة">
+            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+          </button>
+        </div>
+      `).join("");
+      if (window.lucide) window.lucide.createIcons();
+    }
+
+    window.deleteDeliveryZone = function(id) {
+      if (state.deliveryZones.length <= 1) {
+        showToast("يجب الإبقاء على منطقة توصيل واحدة على الأقل!", "error");
+        return;
+      }
+      state.deliveryZones = state.deliveryZones.filter(z => z.id !== id);
+      if (state.selectedZoneId === id) state.selectedZoneId = state.deliveryZones[0].id;
+      localStorage.setItem("ameed_custom_zones", JSON.stringify(state.deliveryZones));
+      renderDeliveryZonesDropdown();
+      renderAdminZones();
+      updateCartCalculation();
+      showToast("تم حذف منطقة التوصيل بنجاح", "info");
+    };
+
+    // -------------------------------------------------------------
+    // م) التهيئة وتشغيل الأحداث
+    // -------------------------------------------------------------
+    document.addEventListener("DOMContentLoaded", () => {
+      // 1. استعادة التخزين المحلي
+      try {
+        const savedCart = localStorage.getItem("ameed_cart");
+        if (savedCart) state.cart = JSON.parse(savedCart);
+
+        const savedMenu = localStorage.getItem("ameed_custom_menu");
+        if (savedMenu) {
+          state.menuItems = JSON.parse(savedMenu);
+          document.getElementById("syncStatusBadge").textContent = "ملف مخصص ✓";
+        }
+
+        const savedZones = localStorage.getItem("ameed_custom_zones");
+        if (savedZones) state.deliveryZones = JSON.parse(savedZones);
+
+        const savedSettings = localStorage.getItem("ameed_custom_settings");
+        if (savedSettings) {
+          state.settings = { ...state.settings, ...JSON.parse(savedSettings) };
+        }
+
+        const savedCoupons = localStorage.getItem("ameed_custom_coupons");
+        if (savedCoupons) state.coupons = JSON.parse(savedCoupons);
+
+        const savedUrl = localStorage.getItem("ameed_sheet_url");
+        if (savedUrl) {
+          state.multiSheetUrl = savedUrl;
+          document.getElementById("sheetMainUrlInput").value = savedUrl;
+        }
+      } catch (e) {
+        console.warn(e);
+      }
+
+      // 2. بناء الواجهة
+      applySettingsToUI();
+      renderCategoryTabs();
+      renderMenuCards();
+      renderDeliveryZonesDropdown();
+      renderAdminZones();
+      renderAdminCoupons();
+      updateCartCalculation();
+
+      // 3. أحداث البحث
+      const searchInput = document.getElementById("liveSearchInput");
+      const clearSearchBtn = document.getElementById("clearSearchBtn");
+      searchInput.addEventListener("input", (e) => {
+        state.searchQuery = e.target.value;
+        clearSearchBtn.classList.toggle("hidden", !state.searchQuery);
+        renderMenuCards();
+      });
+      clearSearchBtn.addEventListener("click", () => {
+        searchInput.value = "";
+        state.searchQuery = "";
+        clearSearchBtn.classList.add("hidden");
+        renderMenuCards();
+      });
+      document.getElementById("resetSearchBtn").addEventListener("click", () => {
+        searchInput.value = "";
+        state.searchQuery = "";
+        state.activeCategory = "all";
+        renderCategoryTabs();
+        renderMenuCards();
+      });
+
+      // 4. درج المعلومات والمشاركة
+      document.getElementById("toggleInfoDrawerBtn").addEventListener("click", () => {
+        document.getElementById("infoDrawer").classList.toggle("hidden");
+      });
+      document.getElementById("quickShareBtn").addEventListener("click", () => {
+        if (navigator.share) {
+          navigator.share({
+            title: state.settings.name,
+            text: 'استكشف أشهى أصناف البيتزا والفطير من منيو العميد أونلاين',
+            url: window.location.href
+          });
+        } else {
+          document.execCommand('copy');
+          showToast("تم نسخ رابط المنيو للحافظة بنجاح!", "success");
+        }
+      });
+
+      // 5. أحداث السلة
+      document.getElementById("openCartModalBtn").addEventListener("click", () => {
+        renderCartModalItems();
+        updateCartCalculation();
+        document.getElementById("cartModal").classList.remove("hidden");
+      });
+      document.getElementById("closeCartModalBtn").addEventListener("click", () => {
+        document.getElementById("cartModal").classList.add("hidden");
+      });
+
+      document.getElementById("typeDeliveryBtn").addEventListener("click", () => {
+        state.orderType = "delivery";
+        document.getElementById("typeDeliveryBtn").className = "py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 bg-brand-800 text-white shadow-sm";
+        document.getElementById("typeDineInBtn").className = "py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-700 hover:text-slate-900";
+        document.getElementById("deliveryFieldsContainer").classList.remove("hidden");
+        document.getElementById("dineInFieldsContainer").classList.add("hidden");
+        updateCartCalculation();
+      });
+
+      document.getElementById("typeDineInBtn").addEventListener("click", () => {
+        state.orderType = "dineIn";
+        document.getElementById("typeDineInBtn").className = "py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 bg-brand-800 text-white shadow-sm";
+        document.getElementById("typeDeliveryBtn").className = "py-2 text-xs font-bold rounded-lg transition-all flex items-center justify-center gap-1.5 text-slate-700 hover:text-slate-900";
+        document.getElementById("deliveryFieldsContainer").classList.add("hidden");
+        document.getElementById("dineInFieldsContainer").classList.remove("hidden");
+        updateCartCalculation();
+      });
+
+      document.getElementById("deliveryZoneSelect").addEventListener("change", (e) => {
+        state.selectedZoneId = e.target.value;
+        updateZoneDisplay();
+        updateCartCalculation();
+      });
+
+      document.querySelectorAll('input[name="paymentMethod"]').forEach(r => {
+        r.addEventListener("change", (e) => {
+          document.getElementById("electronicPayBox").classList.toggle("hidden", e.target.value !== "electronic");
+        });
+      });
+
+      document.getElementById("copyWalletNumBtn").addEventListener("click", () => {
+        const dummy = document.createElement("input");
+        document.body.appendChild(dummy);
+        dummy.value = state.settings.walletNumber;
+        dummy.select();
+        document.execCommand("copy");
+        document.body.removeChild(dummy);
+        showToast("تم نسخ رقم المحفظة بنجاح!", "success");
+      });
+
+      document.getElementById("applyCouponBtn").addEventListener("click", () => {
+        if (state.settings.enableCoupons === false) {
+          showToast("نظام الكوبونات معطل حالياً من إدارة المطعم", "error");
+          return;
+        }
+        const code = document.getElementById("couponInput").value.trim().toUpperCase();
+        const found = state.coupons.find(c => c.code === code && c.status === "مفعل");
+        const fb = document.getElementById("couponFeedback");
+
+        if (found) {
+          state.appliedCoupon = found;
+          fb.className = "text-[10px] font-bold text-emerald-700 block";
+          fb.textContent = `تم تفعيل خصم (${found.type === 'percent' ? found.value + '%' : found.value + ' ج.م'})`;
+          showToast("تم تطبيق الكوبون بنجاح!", "success");
+        } else {
+          state.appliedCoupon = null;
+          fb.className = "text-[10px] font-bold text-red-600 block";
+          fb.textContent = "كود الخصم غير صحيح أو معطل";
+          showToast("كود خصم غير صحيح أو معطل", "error");
+        }
+        updateCartCalculation();
+      });
+
+      document.getElementById("clearCartBtn").addEventListener("click", () => {
+        openConfirmModal("تفريغ السلة", "هل أنت متأكد من رغبتك في حذف كافة الأصناف من السلة؟", () => {
+          state.cart = {};
+          localStorage.removeItem("ameed_cart");
+          renderMenuCards();
+          renderCartModalItems();
+          updateCartCalculation();
+          showToast("تم تفريغ السلة بنجاح", "info");
+        });
+      });
+
+      document.getElementById("sendWhatsAppOrderBtn").addEventListener("click", sendWhatsAppOrder);
+
+      // 6. لوحة الإدارة وتسجيل الدخول
+      document.getElementById("openAdminLoginBtn").addEventListener("click", () => {
+        document.getElementById("adminModal").classList.remove("hidden");
+      });
+      document.getElementById("closeAdminModalBtn").addEventListener("click", () => {
+        document.getElementById("adminModal").classList.add("hidden");
+      });
+
+      document.getElementById("adminPasswordInput").addEventListener("input", (e) => {
+        const val = e.target.value;
+        const hasArabic = /[\u0600-\u06FF]/.test(val);
+        document.getElementById("adminKeyboardNotice").classList.toggle("hidden", !hasArabic);
+      });
+
+      document.getElementById("toggleAdminPasswordBtn").addEventListener("click", () => {
+        const inp = document.getElementById("adminPasswordInput");
+        inp.type = inp.type === "password" ? "text" : "password";
+      });
+
+      document.getElementById("adminLoginSubmitBtn").addEventListener("click", async () => {
+        const raw = document.getElementById("adminPasswordInput").value.trim();
+        const normalized = normalizeKeyboardLayout(raw);
+        const hash = await hashSHA256(normalized);
+
+        if (normalized === "admin123" || hash === state.adminPasswordHash) {
+          document.getElementById("adminLoginStep").classList.add("hidden");
+          document.getElementById("adminControlsStep").classList.remove("hidden");
+          document.getElementById("adminLoginError").classList.add("hidden");
+        } else {
+          document.getElementById("adminLoginError").classList.remove("hidden");
+        }
+      });
+
+      document.getElementById("adminLogoutBtn").addEventListener("click", () => {
+        document.getElementById("adminLoginStep").classList.remove("hidden");
+        document.getElementById("adminControlsStep").classList.add("hidden");
+        document.getElementById("adminModal").classList.add("hidden");
+        document.getElementById("adminPasswordInput").value = "";
+      });
+
+      // مستمع حدث رفع ملف الإكسل أو CSV (الحل الرئيسي المباشر)
+      const universalFileInput = document.getElementById("universalFileInput");
+      if (universalFileInput) {
+        universalFileInput.addEventListener("change", (e) => {
+          const file = e.target.files[0];
+          if (file) {
+            handleFileUpload(file);
+            e.target.value = "";
+          }
+        });
+      }
+
+      // تنزيل نموذج إكسل
+      document.getElementById("downloadTemplateBtn").addEventListener("click", downloadExcelTemplate);
+
+      // رابط الشيت السحابي
+      document.getElementById("syncSheetBtn").addEventListener("click", async () => {
+        const url = document.getElementById("sheetMainUrlInput").value.trim();
+        const btn = document.getElementById("syncSheetBtn");
+        btn.disabled = true;
+        btn.innerHTML = `<i data-lucide="loader" class="w-3.5 h-3.5 animate-spin"></i> <span>جاري الفحص...</span>`;
+        if (window.lucide) window.lucide.createIcons();
+
+        await syncGoogleSheetUrl(url);
+
+        btn.disabled = false;
+        btn.innerHTML = `<i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> <span>مزامنة الرابط السحابي</span>`;
+        if (window.lucide) window.lucide.createIcons();
+      });
+
+      document.getElementById("toggleSheetHelpBtn").addEventListener("click", () => {
+        document.getElementById("sheetHelpBox").classList.toggle("hidden");
+      });
+
+      // خيار اللصق اليدوي
+      document.getElementById("toggleDirectPasteBtn").addEventListener("click", () => {
+        const wrapper = document.getElementById("directPasteWrapper");
+        const chevron = document.getElementById("directPasteChevron");
+        wrapper.classList.toggle("hidden");
+        chevron.classList.toggle("rotate-180");
+      });
+
+      document.getElementById("importDirectPasteBtn").addEventListener("click", () => {
+        const raw = document.getElementById("directPasteInput").value.trim();
+        if (!raw) {
+          showToast("يرجى لصق بيانات المنيو أولاً!", "error");
+          return;
+        }
+        try {
+          const workbook = XLSX.read(raw, { type: 'string' });
+          const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+          const rows = XLSX.utils.sheet_to_json(firstSheet, { header: 1, defval: "" });
+          const items = processMenuRows(rows);
+          if (items.length > 0) {
+            state.menuItems = items;
+            localStorage.setItem("ameed_custom_menu", JSON.stringify(items));
+            renderCategoryTabs();
+            renderMenuCards();
+            updateCartCalculation();
+            document.getElementById("directPasteInput").value = "";
+            document.getElementById("directPasteWrapper").classList.add("hidden");
+            showToast(`تم استيراد ${items.length} صنف بنجاح!`, "success");
+          } else {
+            showToast("تعذر استخراج الأصناف. تأكد من نسخ الجدول مع العناوين.", "error");
+          }
+        } catch (e) {
+          showToast("حدث خطأ أثناء معالجة النص الملصوق.", "error");
+        }
+      });
+
+      document.getElementById("refreshSyncBtn").addEventListener("click", () => {
+        if (state.multiSheetUrl) syncGoogleSheetUrl(state.multiSheetUrl);
+        else showToast("المنيو يعمل حالياً بالبيانات المحفوظة", "info");
+      });
+
+      document.getElementById("saveContactsBtn").addEventListener("click", () => {
+        const wa = document.getElementById("adminWhatsAppInput").value.trim();
+        const wal = document.getElementById("adminWalletInput").value.trim();
+        const mapUrl = document.getElementById("adminMapsUrlInput").value.trim();
+        if (wa) state.settings.whatsapp = wa.replace(/\D/g, "");
+        if (wal) state.settings.walletNumber = wal;
+        if (mapUrl) state.settings.mapsUrl = mapUrl;
+
+        localStorage.setItem("ameed_custom_settings", JSON.stringify(state.settings));
+        applySettingsToUI();
+        showToast("تم حفظ أرقام الواتساب والمحفظة ورابط اللوكيشن بنجاح!", "success");
+      });
+
+      // زر التقاط لوكيشن العميل بدقة GPS
+      const detectGpsBtn = document.getElementById("detectGpsBtn");
+      if (detectGpsBtn) {
+        detectGpsBtn.addEventListener("click", () => {
+          if (!navigator.geolocation) {
+            showToast("متصفحك لا يدعم خاصية تحديد الموقع GPS", "error");
+            return;
+          }
+          showToast("جاري التقاط إحداثيات موقعك بدقة...", "info");
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const lat = pos.coords.latitude;
+              const lng = pos.coords.longitude;
+              const mapsLink = `https://maps.google.com/?q=${lat},${lng}`;
+              const addrInput = document.getElementById("customerAddressInput");
+              if (addrInput) {
+                const currentText = addrInput.value.trim();
+                addrInput.value = currentText 
+                  ? `${currentText}\n📍 رابط الموقع الدقيق: ${mapsLink}`
+                  : `📍 رابط الموقع الدقيق: ${mapsLink}`;
+              }
+              showToast("تم تثبيت اللوكيشن الدقيق في خانة العنوان!", "success");
+            },
+            (err) => {
+              showToast("يرجى تفعيل صلاحية الموقع الجغرافي للمتصفح", "error");
+            },
+            { enableHighAccuracy: true, timeout: 8000 }
+          );
+        });
+      }
+
+      document.getElementById("addNewZoneBtn").addEventListener("click", () => {
+        const name = document.getElementById("newZoneNameInput").value.trim();
+        const fee = parseFloat(document.getElementById("newZoneFeeInput").value);
+        if (!name || isNaN(fee)) {
+          showToast("يرجى إدخال اسم المنطقة والرسوم بشكل صحيح!", "error");
+          return;
+        }
+        state.deliveryZones.push({ id: "local_" + Date.now(), name, fee, time: "30 - 45 دقيقة" });
+        localStorage.setItem("ameed_custom_zones", JSON.stringify(state.deliveryZones));
+        renderDeliveryZonesDropdown();
+        renderAdminZones();
+        updateCartCalculation();
+        document.getElementById("newZoneNameInput").value = "";
+        document.getElementById("newZoneFeeInput").value = "";
+        showToast("تمت إضافة المنطقة بنجاح!", "success");
+      });
+
+      // أحداث إدارة الكوبونات في لوحة التحكم
+      const enableCouponsToggle = document.getElementById("enableCouponsToggle");
+      if (enableCouponsToggle) {
+        enableCouponsToggle.addEventListener("change", (e) => {
+          state.settings.enableCoupons = e.target.checked;
+          localStorage.setItem("ameed_custom_settings", JSON.stringify(state.settings));
+          applySettingsToUI();
+          showToast(state.settings.enableCoupons ? "تم تفعيل نظام الكوبونات" : "تم إخفاء وإيقاف نظام الكوبونات بالكامل", "info");
+        });
+      }
+
+      document.getElementById("addNewCouponBtn").addEventListener("click", () => {
+        const code = document.getElementById("newCouponCodeInput").value.trim().toUpperCase();
+        const type = document.getElementById("newCouponTypeSelect").value;
+        const val = parseFloat(document.getElementById("newCouponValueInput").value);
+
+        if (!code || isNaN(val) || val <= 0) {
+          showToast("يرجى كتابة كود الكوبون وقيمة الخصم بشكل صحيح!", "error");
+          return;
+        }
+
+        if (state.coupons.some(c => c.code === code)) {
+          showToast("هذا الكوبون مضاف بالفعل مسبقاً!", "error");
+          return;
+        }
+
+        state.coupons.push({ code, type, value: val, status: "مفعل" });
+        localStorage.setItem("ameed_custom_coupons", JSON.stringify(state.coupons));
+        renderAdminCoupons();
+        document.getElementById("newCouponCodeInput").value = "";
+        document.getElementById("newCouponValueInput").value = "";
+        showToast(`تمت إضافة الكوبون ${code} بنجاح!`, "success");
+      });
+
+      document.getElementById("resetDefaultsBtn").addEventListener("click", () => {
+        openConfirmModal("استعادة القائمة الأصلية", "هل تريد مسح التعديلات والملفات المرفوعة واستعادة منيو العميد الأصلي؟", () => {
+          state.menuItems = [...DEFAULT_MENU_ITEMS];
+          state.deliveryZones = [...DEFAULT_DELIVERY_ZONES];
+          state.coupons = [...DEFAULT_COUPONS];
+          state.settings = { ...DEFAULT_SETTINGS };
+          state.multiSheetUrl = "";
+          localStorage.removeItem("ameed_custom_menu");
+          localStorage.removeItem("ameed_custom_zones");
+          localStorage.removeItem("ameed_custom_coupons");
+          localStorage.removeItem("ameed_custom_settings");
+          localStorage.removeItem("ameed_sheet_url");
+          applySettingsToUI();
+          renderCategoryTabs();
+          renderMenuCards();
+          renderDeliveryZonesDropdown();
+          renderAdminZones();
+          renderAdminCoupons();
+          updateCartCalculation();
+          document.getElementById("sheetMainUrlInput").value = "";
+          document.getElementById("syncStatusBadge").textContent = "أصلي";
+          document.getElementById("adminModal").classList.add("hidden");
+          showToast("تمت استعادة القائمة الأصلية بنجاح", "info");
+        });
+      });
+
+      document.getElementById("confirmCancelBtn").addEventListener("click", () => {
+        document.getElementById("confirmModal").classList.add("hidden");
+      });
+      document.getElementById("confirmAcceptBtn").addEventListener("click", () => {
+        if (typeof pendingConfirmCallback === "function") pendingConfirmCallback();
+        document.getElementById("confirmModal").classList.add("hidden");
+      });
+
+      if (window.lucide) window.lucide.createIcons();
+    });
+  </script>
+</body>
+</html>
